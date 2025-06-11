@@ -1,6 +1,5 @@
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import BankFeatures from "@/components/BankFeatures";
 import HeroSection from "@/components/HeroSection";
@@ -16,10 +15,10 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-primary-foreground">CCMC Bank</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="secondary" className="font-medium">Sign In</Button>
             </Link>
-            <Link to="/register">
+            <Link to="/auth">
               <Button className="font-medium">Open an Account</Button>
             </Link>
           </div>

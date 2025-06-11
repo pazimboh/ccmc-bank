@@ -1,7 +1,13 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Menu, Search, Shield, User } from "lucide-react";
+import { 
+  Bell, 
+  Menu, 
+  Search, 
+  User,
+  Shield
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,44 +18,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminHeader = () => {
   const { toast } = useToast();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => {
-    toast({
-      title: "Coming soon",
-      description: "Logout functionality will be implemented once connected to Supabase backend.",
-    });
-  };
+  const { signOut, profile } = useAuth();
 
   const handleNotificationClick = () => {
     toast({
-      title: "System notifications",
-      description: "You have 3 unread system notifications.",
+      title: "No new notifications",
+      description: "You're all caught up!",
     });
   };
 
   return (
-    <header className="bg-primary text-primary-foreground border-b border-primary/20">
+    <header className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground">
+                <Button variant="ghost" size="icon" className="md:hidden">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64">
                 <div className="py-4">
-                  <div className="flex items-center mb-6">
-                    <Shield className="h-5 w-5 mr-2 text-primary" />
-                    <h2 className="text-lg font-semibold">CCMC Bank Admin</h2>
-                  </div>
+                  <h2 className="text-lg font-semibold mb-4">CCMC Bank Admin</h2>
                   <nav className="space-y-2">
                     <Link to="/admin" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Dashboard
@@ -74,8 +70,8 @@ const AdminHeader = () => {
               </SheetContent>
             </Sheet>
             <Link to="/admin" className="flex items-center">
-              <Shield className="h-6 w-6 mr-2 text-primary-foreground" />
-              <span className="text-xl font-bold text-primary-foreground">CCMC Admin</span>
+              <Shield className="h-6 w-6 text-primary mr-2" />
+              <span className="text-xl font-bold text-primary">CCMC Bank Admin</span>
             </Link>
           </div>
           
@@ -85,25 +81,24 @@ const AdminHeader = () => {
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-10 pr-4 py-2 rounded-md border bg-primary-foreground text-foreground border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
             
-            <div className="relative">
-              <Button variant="ghost" size="icon" onClick={handleNotificationClick} className="text-primary-foreground">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold flex items-center justify-center text-white">3</span>
-            </div>
+            <Button variant="ghost" size="icon" onClick={handleNotificationClick}>
+              <Bell className="h-5 w-5" />
+            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-primary-foreground">
+                <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {profile?.first_name} {profile?.last_name} (Admin)
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="/admin/profile">Profile</Link>
@@ -112,7 +107,7 @@ const AdminHeader = () => {
                   <Link to="/admin/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={signOut}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -120,20 +115,21 @@ const AdminHeader = () => {
           </div>
           
           <div className="flex items-center md:hidden">
-            <div className="relative">
-              <Button variant="ghost" size="icon" onClick={handleNotificationClick} className="text-primary-foreground">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold flex items-center justify-center text-white">3</span>
-            </div>
+            <Button variant="ghost" size="icon" onClick={handleNotificationClick}>
+              <Bell className="h-5 w-5" />
+            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-primary-foreground">
+                <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  {profile?.first_name} {profile?.last_name} (Admin)
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="/admin/profile">Profile</Link>
                 </DropdownMenuItem>
@@ -141,7 +137,7 @@ const AdminHeader = () => {
                   <Link to="/admin/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={signOut}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

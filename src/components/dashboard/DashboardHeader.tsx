@@ -18,17 +18,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DashboardHeader = () => {
   const { toast } = useToast();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => {
-    toast({
-      title: "Coming soon",
-      description: "Logout functionality will be implemented once connected to Supabase backend.",
-    });
-  };
+  const { signOut, profile } = useAuth();
 
   const handleNotificationClick = () => {
     toast({
@@ -100,7 +94,9 @@ const DashboardHeader = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {profile?.first_name} {profile?.last_name}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="/profile">Profile</Link>
@@ -109,7 +105,7 @@ const DashboardHeader = () => {
                   <Link to="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={signOut}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -128,6 +124,10 @@ const DashboardHeader = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  {profile?.first_name} {profile?.last_name}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="/profile">Profile</Link>
                 </DropdownMenuItem>
@@ -135,7 +135,7 @@ const DashboardHeader = () => {
                   <Link to="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={signOut}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

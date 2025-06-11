@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,11 @@ import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import AccountSummary from "@/components/dashboard/AccountSummary";
 import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const { profile } = useAuth();
 
   // Sample data - will be replaced with real data from Supabase later
   const accounts = [
@@ -50,7 +51,7 @@ const Dashboard = () => {
               </TabsList>
               
               <TabsContent value="overview" className="space-y-6">
-                <h1 className="text-3xl font-bold">Welcome back, Alex</h1>
+                <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}</h1>
                 <p className="text-muted-foreground">Here's an overview of your finances</p>
                 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
