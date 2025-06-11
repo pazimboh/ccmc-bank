@@ -10,7 +10,7 @@ const transactions = [
   {
     id: "1",
     description: "Amazon.com",
-    amount: -56.32,
+    amount: -33500,
     date: "Today",
     type: "purchase",
     icon: ShoppingBag,
@@ -19,7 +19,7 @@ const transactions = [
   {
     id: "2",
     description: "Salary Deposit",
-    amount: 2400.00,
+    amount: 1440000,
     date: "Yesterday",
     type: "deposit",
     icon: ArrowDownRight,
@@ -28,7 +28,7 @@ const transactions = [
   {
     id: "3",
     description: "Starbucks",
-    amount: -4.50,
+    amount: -2700,
     date: "Mar 10",
     type: "purchase",
     icon: CreditCard,
@@ -37,7 +37,7 @@ const transactions = [
   {
     id: "4",
     description: "Transfer to Savings",
-    amount: -500.00,
+    amount: -300000,
     date: "Mar 8",
     type: "transfer",
     icon: ArrowUpRight,
@@ -46,7 +46,7 @@ const transactions = [
   {
     id: "5",
     description: "Netflix Subscription",
-    amount: -15.99,
+    amount: -9600,
     date: "Mar 5",
     type: "subscription",
     icon: CreditCard,
@@ -75,7 +75,7 @@ const RecentTransactions = ({ limit }: RecentTransactionsProps) => {
           </div>
           <div className="text-right">
             <p className={`font-semibold ${transaction.amount < 0 ? "text-red-500" : "text-green-500"}`}>
-              {transaction.amount < 0 ? "-" : "+"}${Math.abs(transaction.amount).toFixed(2)}
+              {transaction.amount < 0 ? "-" : "+"}{Math.abs(transaction.amount).toLocaleString()} FCFA
             </p>
             <Badge variant="outline" className="text-xs capitalize">
               {transaction.type}

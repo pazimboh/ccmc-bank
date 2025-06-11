@@ -37,8 +37,6 @@ const Footer = () => {
               <li><Link to="/personal-banking" className="hover:text-white transition-colors">Personal Banking</Link></li>
               <li><Link to="/business-banking" className="hover:text-white transition-colors">Business Banking</Link></li>
               <li><Link to="/loans" className="hover:text-white transition-colors">Loans & Mortgages</Link></li>
-              <li><Link to="/investment" className="hover:text-white transition-colors">Investments</Link></li>
-              <li><Link to="/insurance" className="hover:text-white transition-colors">Insurance</Link></li>
             </ul>
           </div>
           
@@ -48,17 +46,16 @@ const Footer = () => {
               <li><Link to="/help" className="hover:text-white transition-colors">Help Center</Link></li>
               <li><Link to="/faq" className="hover:text-white transition-colors">FAQs</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              <li><Link to="/security" className="hover:text-white transition-colors">Security</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <address className="not-italic">
-              <p>123 Banking Street</p>
-              <p>Financial District</p>
-              <p>New York, NY 10005</p>
-              <p className="mt-3">Phone: (555) 123-4567</p>
+              <p>Bambili Street</p>
+              <p>Tubah Council</p>
+              <p>Bamenda, Cameroon</p>
+              <p className="mt-3">Phone: (237) 653-225-597</p>
               <p>Email: support@ccmcbank.com</p>
             </address>
           </div>

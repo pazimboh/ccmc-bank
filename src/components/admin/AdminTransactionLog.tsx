@@ -17,7 +17,7 @@ const transactionData = [
     type: "transfer",
     from: "Alex Johnson (ID: 1)",
     to: "Sarah Lee (ID: 4)",
-    amount: 500.00,
+    amount: 300000.00,
     date: "2023-05-18T09:30:00Z",
     status: "complete",
   },
@@ -26,7 +26,7 @@ const transactionData = [
     type: "withdrawal",
     from: "Maria Garcia (ID: 2)",
     to: "ATM #4532",
-    amount: 200.00,
+    amount: 120000.00,
     date: "2023-05-17T15:45:00Z",
     status: "complete",
   },
@@ -35,7 +35,7 @@ const transactionData = [
     type: "deposit",
     from: "Cash Deposit",
     to: "John Smith (ID: 3)",
-    amount: 1000.00,
+    amount: 600000.00,
     date: "2023-05-17T11:20:00Z",
     status: "complete",
   },
@@ -44,7 +44,7 @@ const transactionData = [
     type: "payment",
     from: "Robert Chen (ID: 5)",
     to: "Mortgage Payment",
-    amount: 1250.00,
+    amount: 750000.00,
     date: "2023-05-15T08:15:00Z",
     status: "complete",
   },
@@ -53,7 +53,7 @@ const transactionData = [
     type: "fee",
     from: "System",
     to: "Alex Johnson (ID: 1)",
-    amount: 25.00,
+    amount: 15000.00,
     date: "2023-05-14T00:00:00Z",
     status: "complete",
   },
@@ -62,7 +62,7 @@ const transactionData = [
     type: "transfer",
     from: "Maria Garcia (ID: 2)",
     to: "External Account",
-    amount: 350.00,
+    amount: 210000.00,
     date: "2023-05-12T16:30:00Z",
     status: "pending",
   },
@@ -71,7 +71,7 @@ const transactionData = [
     type: "refund",
     from: "Merchant Refund",
     to: "John Smith (ID: 3)",
-    amount: 75.50,
+    amount: 45300.00,
     date: "2023-05-10T13:40:00Z",
     status: "complete",
   },
@@ -133,7 +133,7 @@ const AdminTransactionLog = () => {
               <TableCell>{getTypeBadge(transaction.type)}</TableCell>
               <TableCell>{transaction.from}</TableCell>
               <TableCell>{transaction.to}</TableCell>
-              <TableCell className="font-medium">${transaction.amount.toFixed(2)}</TableCell>
+              <TableCell className="font-medium">{transaction.amount.toLocaleString()} FCFA</TableCell>
               <TableCell>{new Date(transaction.date).toLocaleString()}</TableCell>
               <TableCell>{getStatusBadge(transaction.status)}</TableCell>
             </TableRow>

@@ -20,7 +20,7 @@ const loanRequests = [
       email: "michael.brown@example.com",
     },
     type: "Personal Loan",
-    amount: 15000,
+    amount: 9000000,
     term: 36, // months
     purpose: "Home renovation",
     creditScore: 720,
@@ -34,7 +34,7 @@ const loanRequests = [
       email: "j.wilson@example.com",
     },
     type: "Auto Loan",
-    amount: 22500,
+    amount: 13500000,
     term: 48, // months
     purpose: "New vehicle purchase",
     creditScore: 680,
@@ -48,7 +48,7 @@ const loanRequests = [
       email: "david.m@example.com",
     },
     type: "Home Loan",
-    amount: 320000,
+    amount: 192000000,
     term: 360, // months
     purpose: "Home purchase",
     creditScore: 760,
@@ -102,7 +102,7 @@ const AdminLoanRequests = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>{loan.type} - ${loan.amount.toLocaleString()}</CardTitle>
+                <CardTitle>{loan.type} - {loan.amount.toLocaleString()} FCFA</CardTitle>
                 <CardDescription>Application ID: {loan.id}</CardDescription>
               </div>
               {getStatusBadge(loan.status)}
@@ -123,10 +123,10 @@ const AdminLoanRequests = () => {
               <div>
                 <h4 className="text-sm font-semibold mb-2">Loan Details</h4>
                 <div className="space-y-1">
-                  <p className="text-sm"><span className="font-medium">Amount:</span> ${loan.amount.toLocaleString()}</p>
+                  <p className="text-sm"><span className="font-medium">Amount:</span> {loan.amount.toLocaleString()} FCFA</p>
                   <p className="text-sm"><span className="font-medium">Term:</span> {loan.term} months</p>
                   <p className="text-sm"><span className="font-medium">Purpose:</span> {loan.purpose}</p>
-                  <p className="text-sm"><span className="font-medium">Monthly Payment:</span> ${((loan.amount / loan.term) * 1.05).toFixed(2)}</p>
+                  <p className="text-sm"><span className="font-medium">Monthly Payment:</span> {((loan.amount / loan.term) * 1.05).toLocaleString()} FCFA</p>
                 </div>
                 
                 {loan.status === "pending" && (

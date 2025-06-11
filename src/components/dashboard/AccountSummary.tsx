@@ -22,7 +22,7 @@ const AccountSummary = ({ account }: AccountSummaryProps) => {
           <p className="text-sm text-muted-foreground">{account.accountNumber}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold">${account.balance.toFixed(2)}</p>
+          <p className="text-xl font-bold">{account.balance.toLocaleString()} FCFA</p>
           <p className="text-sm text-muted-foreground">Available</p>
         </div>
       </div>

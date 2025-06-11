@@ -30,7 +30,7 @@ const customers = [
     status: "active",
     accountType: "Checking & Savings",
     joinDate: "2023-01-15",
-    balance: "$24,530.65",
+    balance: "14718390 FCFA",
   },
   {
     id: "2",
@@ -39,7 +39,7 @@ const customers = [
     status: "active",
     accountType: "Savings",
     joinDate: "2023-03-22",
-    balance: "$5,720.42",
+    balance: "3432252 FCFA",
   },
   {
     id: "3",
@@ -48,7 +48,7 @@ const customers = [
     status: "frozen",
     accountType: "Checking",
     joinDate: "2022-11-05",
-    balance: "$1,245.33",
+    balance: "747198 FCFA",
   },
   {
     id: "4",
@@ -57,7 +57,7 @@ const customers = [
     status: "pending",
     accountType: "Business",
     joinDate: "2023-05-10",
-    balance: "$0.00",
+    balance: "0 FCFA",
   },
   {
     id: "5",
@@ -66,7 +66,7 @@ const customers = [
     status: "active",
     accountType: "Checking & Savings",
     joinDate: "2022-08-30",
-    balance: "$12,845.77",
+    balance: "7707462 FCFA",
   },
   {
     id: "6",
@@ -75,7 +75,7 @@ const customers = [
     status: "pending",
     accountType: "Checking",
     joinDate: "2023-05-18",
-    balance: "$0.00",
+    balance: "0 FCFA",
   },
 ];
 
