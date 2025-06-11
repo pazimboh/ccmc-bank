@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('*')
         .eq('id', userId)
         .single();
-
       // Fetch role
       const { data: roleData } = await supabase
         .from('user_roles')
@@ -64,7 +62,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .single();
 
-      setProfile(profileData);
+      // Fix: Ensure status is one of the allowed values
+      const allowedStatuses = ["pending", "approved", "rejected"] as const;
+      const status =
+        allowedStatuses.includes(profileData?.status)
+          ? profileData.status
+          : "pending";
+
+      setProfile(
+        profileData
+          ? { ...profileData, status }
+          : null
+      );
       setUserRole(roleData);
     } catch (error) {
       console.error('Error fetching user data:', error);
