@@ -75,15 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Role fetch error:', roleError);
       }
 
-      // Fix: Ensure status is one of the allowed values
-      const allowedStatuses = ["pending", "approved", "rejected"] as const;
-      const status =
-        allowedStatuses.includes(profileData?.status)
-          ? profileData.status
-          : "pending";
+      // Fix: Ensure status is one of the allowed values with proper typing
+      const allowedStatuses: Array<'pending' | 'approved' | 'rejected'> = ['pending', 'approved', 'rejected'];
+      const status: 'pending' | 'approved' | 'rejected' = 
+        profileData?.status && allowedStatuses.includes(profileData.status as any)
+          ? (profileData.status as 'pending' | 'approved' | 'rejected')
+          : 'pending';
 
-      const updatedProfile = profileData
-        ? { ...profileData, status }
+      const updatedProfile: Profile | null = profileData
+        ? { 
+            ...profileData, 
+            status 
+          }
         : null;
 
       console.log('Fetched profile:', updatedProfile);
