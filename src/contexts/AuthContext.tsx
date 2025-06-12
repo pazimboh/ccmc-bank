@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,7 @@ interface AuthContextType {
   isApproved: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,18 +51,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (userId: string) => {
     try {
+      console.log('Fetching user data for:', userId);
+      
       // Fetch profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+      
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+      }
+
       // Fetch role
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .single();
+      
+      if (roleError) {
+        console.error('Role fetch error:', roleError);
+      }
 
       // Fix: Ensure status is one of the allowed values
       const allowedStatuses = ["pending", "approved", "rejected"] as const;
@@ -69,14 +82,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ? profileData.status
           : "pending";
 
-      setProfile(
-        profileData
-          ? { ...profileData, status }
-          : null
-      );
+      const updatedProfile = profileData
+        ? { ...profileData, status }
+        : null;
+
+      console.log('Fetched profile:', updatedProfile);
+      console.log('Fetched role:', roleData);
+
+      setProfile(updatedProfile);
       setUserRole(roleData);
     } catch (error) {
       console.error('Error fetching user data:', error);
+    }
+  };
+
+  const refreshUserData = async () => {
+    if (user?.id) {
+      await fetchUserData(user.id);
     }
   };
 
@@ -97,10 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Use setTimeout to avoid potential deadlocks
           setTimeout(() => {
             fetchUserData(session.user.id);
           }, 0);
@@ -114,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -137,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isApproved,
         isAdmin,
         signOut,
+        refreshUserData,
       }}
     >
       {children}

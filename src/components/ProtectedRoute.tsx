@@ -13,18 +13,29 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('ProtectedRoute check:', { 
+      user: user?.email, 
+      isLoading, 
+      isApproved, 
+      isAdmin, 
+      requireAdmin 
+    });
+
     if (!isLoading) {
       if (!user) {
+        console.log('No user, redirecting to auth');
         navigate('/auth');
         return;
       }
       
       if (requireAdmin && !isAdmin) {
+        console.log('Admin required but user is not admin, redirecting to dashboard');
         navigate('/dashboard');
         return;
       }
       
       if (!requireAdmin && !isApproved && !isAdmin) {
+        console.log('User not approved and not admin, redirecting to pending approval');
         navigate('/pending-approval');
         return;
       }

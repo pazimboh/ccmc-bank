@@ -2,10 +2,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Clock } from "lucide-react";
+import { Clock, RefreshCw } from "lucide-react";
+import { useState } from "react";
 
 const PendingApproval = () => {
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, refreshUserData } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUserData();
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -50,7 +63,16 @@ const PendingApproval = () => {
                 You will receive an email notification once your account has been approved.
               </p>
             </div>
-            <div className="pt-4">
+            <div className="pt-4 space-y-3">
+              <Button 
+                variant="outline" 
+                onClick={handleRefresh} 
+                className="w-full"
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Checking Status...' : 'Check Status'}
+              </Button>
               <p className="text-sm text-gray-500 mb-3">
                 Need help? Contact us at support@ccmcbank.com or (237) 653-225-597
               </p>
