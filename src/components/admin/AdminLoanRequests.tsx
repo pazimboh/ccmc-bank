@@ -56,7 +56,13 @@ const AdminLoanRequests = () => {
         return;
       }
 
-      setLoans(data || []);
+      // Ensure data has the correct structure
+      const loansData = (data || []).map(loan => ({
+        ...loan,
+        customer: loan.customer || null
+      }));
+
+      setLoans(loansData);
     } catch (error) {
       console.error('Error:', error);
     } finally {

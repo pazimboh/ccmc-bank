@@ -15,7 +15,7 @@ interface Transaction {
   amount: number;
   status: string;
   created_at: string;
-  customer: {
+  customer?: {
     first_name: string;
     last_name: string;
   } | null;
@@ -68,25 +68,23 @@ const AdminTransactionLog = () => {
       case "failed":
         return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
-  const getTransactionTypeBadge = (type: string) => {
-    const colorMap: Record<string, string> = {
+  const getTypeBadge = (type: string) => {
+    const typeColors = {
       transfer: "bg-blue-100 text-blue-800",
       withdrawal: "bg-orange-100 text-orange-800",
       deposit: "bg-green-100 text-green-800",
       payment: "bg-purple-100 text-purple-800",
       fee: "bg-gray-100 text-gray-800",
-      refund: "bg-teal-100 text-teal-800",
+      refund: "bg-cyan-100 text-cyan-800"
     };
     
-    return (
-      <Badge className={colorMap[type] || "bg-gray-100 text-gray-800"}>
-        {type.charAt(0).toUpperCase() + type.slice(1)}
-      </Badge>
-    );
+    const colorClass = typeColors[type as keyof typeof typeColors] || "bg-gray-100 text-gray-800";
+    
+    return <Badge className={colorClass}>{type.charAt(0).toUpperCase() + type.slice(1)}</Badge>;
   };
 
   if (isLoading) {
@@ -125,21 +123,17 @@ const AdminTransactionLog = () => {
                     'N/A'
                   }
                 </TableCell>
-                <TableCell>
-                  {getTransactionTypeBadge(transaction.transaction_type)}
-                </TableCell>
-                <TableCell className="max-w-[150px] truncate">
+                <TableCell>{getTypeBadge(transaction.transaction_type)}</TableCell>
+                <TableCell className="text-sm">
                   {transaction.from_account || 'N/A'}
                 </TableCell>
-                <TableCell className="max-w-[150px] truncate">
+                <TableCell className="text-sm">
                   {transaction.to_account || 'N/A'}
                 </TableCell>
-                <TableCell className="font-semibold">
+                <TableCell className="font-medium">
                   {transaction.amount.toLocaleString()} FCFA
                 </TableCell>
-                <TableCell>
-                  {getStatusBadge(transaction.status)}
-                </TableCell>
+                <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                 <TableCell className="text-sm">
                   {new Date(transaction.created_at).toLocaleString()}
                 </TableCell>

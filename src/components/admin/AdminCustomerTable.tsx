@@ -47,7 +47,13 @@ const AdminCustomerTable = () => {
         return;
       }
 
-      setCustomers(data || []);
+      // Ensure data has the correct structure
+      const customersData = (data || []).map(customer => ({
+        ...customer,
+        user_roles: customer.user_roles || []
+      }));
+
+      setCustomers(customersData);
     } catch (error) {
       console.error('Error:', error);
     } finally {
