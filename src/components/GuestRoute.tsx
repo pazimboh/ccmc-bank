@@ -23,17 +23,7 @@ const GuestRoute = ({ children }: GuestRouteProps) => {
     }
   }, [user, isLoading, isApproved, isAdmin, navigate]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Remove loading spinner for guest routes - just show content if no user
   if (user) {
     return null;
   }

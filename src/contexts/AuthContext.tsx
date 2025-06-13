@@ -94,8 +94,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setProfile(updatedProfile);
       setUserRole(roleData);
+      
+      // IMPORTANT: Only set loading to false AFTER we've fetched and set the user data
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching user data:', error);
+      // Set loading to false even if there's an error
+      setIsLoading(false);
     }
   };
 
@@ -128,15 +133,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlocks
+          // Use setTimeout to avoid potential deadlocks, but don't set loading to false here
           setTimeout(() => {
             fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setUserRole(null);
+          setIsLoading(false); // Only set loading to false when there's no user
         }
-        setIsLoading(false);
       }
     );
 
@@ -148,9 +153,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserData(session.user.id);
+        fetchUserData(session.user.id); // This will set isLoading to false when done
+      } else {
+        setIsLoading(false); // Only set loading to false when there's no user
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
