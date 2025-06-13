@@ -1,18 +1,33 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Clock, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PendingApproval = () => {
-  const { signOut, profile, refreshUserData } = useAuth();
+  const { signOut, profile, refreshUserData, isApproved, isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refreshUserData();
+      
+      // After refreshing data, check if user should be redirected
+      // Use setTimeout to ensure state has been updated
+      setTimeout(() => {
+        if (isAdmin) {
+          console.log('User is admin, redirecting to admin dashboard');
+          navigate('/admin');
+        } else if (isApproved) {
+          console.log('User is approved, redirecting to dashboard');
+          navigate('/dashboard');
+        }
+        // If still pending, stay on this page
+      }, 100);
+      
     } catch (error) {
       console.error('Error refreshing user data:', error);
     } finally {
