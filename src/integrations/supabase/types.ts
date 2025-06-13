@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      loans: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_score: number | null
+          customer_id: string
+          id: string
+          loan_type: string
+          purpose: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          term_months: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credit_score?: number | null
+          customer_id: string
+          id?: string
+          loan_type: string
+          purpose?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          term_months: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_score?: number | null
+          customer_id?: string
+          id?: string
+          loan_type?: string
+          purpose?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          term_months?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string | null
@@ -44,6 +104,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          from_account: string | null
+          id: string
+          status: string
+          to_account: string | null
+          transaction_id: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          from_account?: string | null
+          id?: string
+          status?: string
+          to_account?: string | null
+          transaction_id: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          from_account?: string | null
+          id?: string
+          status?: string
+          to_account?: string | null
+          transaction_id?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -1,5 +1,4 @@
 
-import { Link } from "react-router-dom";
 import {
   Users,
   PiggyBank,
@@ -22,49 +21,41 @@ const navItems = [
     id: "overview",
     label: "Dashboard",
     icon: BarChart3,
-    href: "/admin",
   },
   {
     id: "customers",
     label: "Customers",
     icon: Users,
-    href: "/admin/customers",
   },
   {
     id: "loans",
     label: "Loan Applications",
     icon: PiggyBank,
-    href: "/admin/loans",
   },
   {
     id: "transactions",
     label: "Transactions",
     icon: Calculator,
-    href: "/admin/transactions",
   },
   {
     id: "reports",
     label: "Reports",
     icon: FileText,
-    href: "/admin/reports",
   },
   {
     id: "audit",
     label: "Audit Log",
     icon: Clock,
-    href: "/admin/audit",
   },
   {
     id: "security",
     label: "Security",
     icon: ShieldAlert,
-    href: "/admin/security",
   },
   {
     id: "settings",
     label: "Settings",
     icon: Settings,
-    href: "/admin/settings",
   },
 ];
 
@@ -73,11 +64,10 @@ const AdminNav = ({ activeTab, setActiveTab }: AdminNavProps) => {
     <nav className="hidden md:block w-64 bg-white border-r border-gray-200 p-4 min-h-[calc(100vh-4rem)]">
       <div className="space-y-1">
         {navItems.map((item) => (
-          <Link
+          <button
             key={item.id}
-            to={item.href}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors w-full text-left",
               activeTab === item.id
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -86,7 +76,7 @@ const AdminNav = ({ activeTab, setActiveTab }: AdminNavProps) => {
           >
             <item.icon className="h-4 w-4" />
             {item.label}
-          </Link>
+          </button>
         ))}
       </div>
 
@@ -96,11 +86,9 @@ const AdminNav = ({ activeTab, setActiveTab }: AdminNavProps) => {
           <p className="text-xs mb-3">
             Need assistance with administrative tasks? Check the admin documentation.
           </p>
-          <Link to="/admin/help">
-            <button className="text-xs text-blue-600 font-medium hover:underline">
-              View Documentation
-            </button>
-          </Link>
+          <button className="text-xs text-blue-600 font-medium hover:underline">
+            View Documentation
+          </button>
         </div>
       </div>
     </nav>

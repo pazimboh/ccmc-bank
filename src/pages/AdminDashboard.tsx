@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +11,15 @@ import AdminNav from "@/components/admin/AdminNav";
 import AdminCustomerTable from "@/components/admin/AdminCustomerTable";
 import AdminLoanRequests from "@/components/admin/AdminLoanRequests";
 import AdminTransactionLog from "@/components/admin/AdminTransactionLog";
+import AdminReports from "@/components/admin/AdminReports";
+import AdminAuditLog from "@/components/admin/AdminAuditLog";
+import AdminSecurity from "@/components/admin/AdminSecurity";
+import AdminSettings from "@/components/admin/AdminSettings";
+import AddCustomerModal from "@/components/admin/AddCustomerModal";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -26,13 +31,6 @@ const AdminDashboard = () => {
         <main className="flex-1 p-6">
           <div className="container mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="customers">Customers</TabsTrigger>
-                <TabsTrigger value="loans">Loan Requests</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-              </TabsList>
-              
               <TabsContent value="overview" className="space-y-6">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                 <p className="text-muted-foreground">Welcome back, Administrator</p>
@@ -140,13 +138,14 @@ const AdminDashboard = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline">Filter</Button>
-                    <Button>Add Customer</Button>
+                    <Button onClick={() => setShowAddCustomer(true)}>Add Customer</Button>
                   </div>
                 </div>
                 
                 <Separator />
                 
                 <AdminCustomerTable />
+                <AddCustomerModal open={showAddCustomer} onOpenChange={setShowAddCustomer} />
               </TabsContent>
               
               <TabsContent value="loans" className="space-y-6">
@@ -194,6 +193,22 @@ const AdminDashboard = () => {
                     <AdminTransactionLog />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="reports" className="space-y-6">
+                <AdminReports />
+              </TabsContent>
+
+              <TabsContent value="audit" className="space-y-6">
+                <AdminAuditLog />
+              </TabsContent>
+
+              <TabsContent value="security" className="space-y-6">
+                <AdminSecurity />
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-6">
+                <AdminSettings />
               </TabsContent>
             </Tabs>
           </div>

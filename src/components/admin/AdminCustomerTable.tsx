@@ -1,189 +1,199 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { MoreHorizontal, UserCog, Fingerprint, Lock, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Sample data - would be fetched from Supabase in a real implementation
-const customers = [
-  {
-    id: "1",
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    status: "active",
-    accountType: "Checking & Savings",
-    joinDate: "2023-01-15",
-    balance: "14718390 FCFA",
-  },
-  {
-    id: "2",
-    name: "Maria Garcia",
-    email: "maria.g@example.com",
-    status: "active",
-    accountType: "Savings",
-    joinDate: "2023-03-22",
-    balance: "3432252 FCFA",
-  },
-  {
-    id: "3",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    status: "frozen",
-    accountType: "Checking",
-    joinDate: "2022-11-05",
-    balance: "747198 FCFA",
-  },
-  {
-    id: "4",
-    name: "Sarah Lee",
-    email: "sarah.lee@example.com",
-    status: "pending",
-    accountType: "Business",
-    joinDate: "2023-05-10",
-    balance: "0 FCFA",
-  },
-  {
-    id: "5",
-    name: "Robert Chen",
-    email: "robert.c@example.com",
-    status: "active",
-    accountType: "Checking & Savings",
-    joinDate: "2022-08-30",
-    balance: "7707462 FCFA",
-  },
-  {
-    id: "6",
-    name: "Emily Taylor",
-    email: "emily.t@example.com",
-    status: "pending",
-    accountType: "Checking",
-    joinDate: "2023-05-18",
-    balance: "0 FCFA",
-  },
-];
+interface Customer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  address: string | null;
+  account_type: string | null;
+  status: string | null;
+  created_at: string | null;
+  user_roles: {
+    role: string;
+  }[];
+}
 
 const AdminCustomerTable = () => {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
-      case "frozen":
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Frozen</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const { user } = useAuth();
+
+  const fetchCustomers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          user_roles(role)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching customers:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch customers",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setCustomers(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleVerifyIdentity = (customerId: string) => {
-    toast({
-      title: "Identity verification",
-      description: `Started verification process for customer ID: ${customerId}`,
-    });
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const handleStatusUpdate = async (customerId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', customerId);
+
+      if (error) {
+        throw error;
+      }
+
+      setCustomers(customers.map(customer => 
+        customer.id === customerId ? { ...customer, status: newStatus } : customer
+      ));
+
+      toast({
+        title: "Status Updated",
+        description: `Customer status updated to ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update customer status",
+        variant: "destructive",
+      });
+    }
   };
-  
-  const handleFreezeAccount = (customerId: string) => {
-    toast({
-      title: "Account frozen",
-      description: `Account for customer ID: ${customerId} has been frozen.`,
-    });
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
   };
-  
+
+  const getRoleBadge = (roles: { role: string }[]) => {
+    const role = roles[0]?.role || 'customer';
+    return role === 'admin' ? 
+      <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge> :
+      <Badge variant="outline">Customer</Badge>;
+  };
+
+  if (isLoading) {
+    return <div className="p-4">Loading customers...</div>;
+  }
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Account Type</TableHead>
-            <TableHead>Join Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Balance</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {customers.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell className="font-medium">{customer.id}</TableCell>
-              <TableCell>
-                <div>
-                  <p className="font-medium">{customer.name}</p>
-                  <p className="text-sm text-muted-foreground">{customer.email}</p>
-                </div>
-              </TableCell>
-              <TableCell>{customer.accountType}</TableCell>
-              <TableCell>{new Date(customer.joinDate).toLocaleDateString()}</TableCell>
-              <TableCell>{getStatusBadge(customer.status)}</TableCell>
-              <TableCell className="text-right font-medium">{customer.balance}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleVerifyIdentity(customer.id)}>
-                      <Fingerprint className="mr-2 h-4 w-4" />
-                      Verify Identity
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFreezeAccount(customer.id)}>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Freeze Account
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Edit Profile
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <div className="space-y-4">
+      {customers.length === 0 ? (
+        <div className="p-6 text-center text-muted-foreground">
+          No customers found.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Account Type</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      <div className="flex items-center justify-end p-4">
-        <div className="text-sm text-muted-foreground">
-          Showing <strong>6</strong> of <strong>1248</strong> customers
-        </div>
-        <div className="ml-4 flex items-center space-x-2">
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm">
-            Next
-          </Button>
-        </div>
-      </div>
+          </TableHeader>
+          <TableBody>
+            {customers.map((customer) => (
+              <TableRow key={customer.id}>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">
+                      {customer.first_name} {customer.last_name}
+                    </div>
+                    <div className="text-sm text-muted-foreground font-mono">
+                      {customer.id}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>{customer.account_type || 'N/A'}</TableCell>
+                <TableCell>{customer.phone || 'N/A'}</TableCell>
+                <TableCell>{getRoleBadge(customer.user_roles)}</TableCell>
+                <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                <TableCell className="text-sm">
+                  {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    {customer.status === 'pending' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleStatusUpdate(customer.id, 'approved')}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStatusUpdate(customer.id, 'rejected')}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {customer.status === 'rejected' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(customer.id, 'approved')}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {customer.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(customer.id, 'pending')}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };

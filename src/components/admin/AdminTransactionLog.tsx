@@ -1,162 +1,153 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample transaction data
-const transactionData = [
-  {
-    id: "TXN-45678",
-    type: "transfer",
-    from: "Alex Johnson (ID: 1)",
-    to: "Sarah Lee (ID: 4)",
-    amount: 300000.00,
-    date: "2023-05-18T09:30:00Z",
-    status: "complete",
-  },
-  {
-    id: "TXN-45677",
-    type: "withdrawal",
-    from: "Maria Garcia (ID: 2)",
-    to: "ATM #4532",
-    amount: 120000.00,
-    date: "2023-05-17T15:45:00Z",
-    status: "complete",
-  },
-  {
-    id: "TXN-45676",
-    type: "deposit",
-    from: "Cash Deposit",
-    to: "John Smith (ID: 3)",
-    amount: 600000.00,
-    date: "2023-05-17T11:20:00Z",
-    status: "complete",
-  },
-  {
-    id: "TXN-45675",
-    type: "payment",
-    from: "Robert Chen (ID: 5)",
-    to: "Mortgage Payment",
-    amount: 750000.00,
-    date: "2023-05-15T08:15:00Z",
-    status: "complete",
-  },
-  {
-    id: "TXN-45674",
-    type: "fee",
-    from: "System",
-    to: "Alex Johnson (ID: 1)",
-    amount: 15000.00,
-    date: "2023-05-14T00:00:00Z",
-    status: "complete",
-  },
-  {
-    id: "TXN-45673",
-    type: "transfer",
-    from: "Maria Garcia (ID: 2)",
-    to: "External Account",
-    amount: 210000.00,
-    date: "2023-05-12T16:30:00Z",
-    status: "pending",
-  },
-  {
-    id: "TXN-45672",
-    type: "refund",
-    from: "Merchant Refund",
-    to: "John Smith (ID: 3)",
-    amount: 45300.00,
-    date: "2023-05-10T13:40:00Z",
-    status: "complete",
-  },
-];
+interface Transaction {
+  id: string;
+  transaction_id: string;
+  customer_id: string | null;
+  transaction_type: string;
+  from_account: string | null;
+  to_account: string | null;
+  amount: number;
+  status: string;
+  created_at: string;
+  customer: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
 
 const AdminTransactionLog = () => {
-  const [transactions, setTransactions] = useState(transactionData);
-  
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case "transfer":
-        return <Badge variant="outline" className="border-blue-500 text-blue-500">Transfer</Badge>;
-      case "withdrawal":
-        return <Badge variant="outline" className="border-red-500 text-red-500">Withdrawal</Badge>;
-      case "deposit":
-        return <Badge variant="outline" className="border-green-500 text-green-500">Deposit</Badge>;
-      case "payment":
-        return <Badge variant="outline" className="border-purple-500 text-purple-500">Payment</Badge>;
-      case "fee":
-        return <Badge variant="outline" className="border-orange-500 text-orange-500">Fee</Badge>;
-      case "refund":
-        return <Badge variant="outline" className="border-teal-500 text-teal-500">Refund</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          customer:profiles(first_name, last_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "complete":
-        return <span className="text-green-500 text-sm">Complete</span>;
+        return <Badge className="bg-green-100 text-green-800">Complete</Badge>;
       case "pending":
-        return <span className="text-yellow-500 text-sm">Pending</span>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
       case "failed":
-        return <span className="text-red-500 text-sm">Failed</span>;
+        return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
       default:
-        return <span className="text-gray-500 text-sm">{status}</span>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
+
+  const getTransactionTypeBadge = (type: string) => {
+    const colorMap: Record<string, string> = {
+      transfer: "bg-blue-100 text-blue-800",
+      withdrawal: "bg-orange-100 text-orange-800",
+      deposit: "bg-green-100 text-green-800",
+      payment: "bg-purple-100 text-purple-800",
+      fee: "bg-gray-100 text-gray-800",
+      refund: "bg-teal-100 text-teal-800",
+    };
+    
+    return (
+      <Badge className={colorMap[type] || "bg-gray-100 text-gray-800"}>
+        {type.charAt(0).toUpperCase() + type.slice(1)}
+      </Badge>
+    );
+  };
+
+  if (isLoading) {
+    return <div className="p-4">Loading transactions...</div>;
+  }
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Transaction ID</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>From</TableHead>
-            <TableHead>To</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.map((transaction) => (
-            <TableRow key={transaction.id}>
-              <TableCell className="font-mono text-xs">{transaction.id}</TableCell>
-              <TableCell>{getTypeBadge(transaction.type)}</TableCell>
-              <TableCell>{transaction.from}</TableCell>
-              <TableCell>{transaction.to}</TableCell>
-              <TableCell className="font-medium">{transaction.amount.toLocaleString()} FCFA</TableCell>
-              <TableCell>{new Date(transaction.date).toLocaleString()}</TableCell>
-              <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+    <div className="space-y-4">
+      {transactions.length === 0 ? (
+        <div className="p-6 text-center text-muted-foreground">
+          No transactions found.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Transaction ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>From</TableHead>
+              <TableHead>To</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      <div className="flex items-center justify-between p-4">
-        <div className="text-sm text-muted-foreground">
-          Showing <strong>7</strong> of <strong>240</strong> transactions
-        </div>
-        <div className="flex items-center space-x-2">
-          <button className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50" disabled>
-            Previous
-          </button>
-          <button className="px-2 py-1 text-sm bg-primary/10 rounded text-primary">1</button>
-          <button className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground">2</button>
-          <button className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground">3</button>
-          <button className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground">
-            Next
-          </button>
-        </div>
-      </div>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell className="font-mono text-sm">
+                  {transaction.transaction_id}
+                </TableCell>
+                <TableCell>
+                  {transaction.customer ? 
+                    `${transaction.customer.first_name} ${transaction.customer.last_name}` : 
+                    'N/A'
+                  }
+                </TableCell>
+                <TableCell>
+                  {getTransactionTypeBadge(transaction.transaction_type)}
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate">
+                  {transaction.from_account || 'N/A'}
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate">
+                  {transaction.to_account || 'N/A'}
+                </TableCell>
+                <TableCell className="font-semibold">
+                  {transaction.amount.toLocaleString()} FCFA
+                </TableCell>
+                <TableCell>
+                  {getStatusBadge(transaction.status)}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {new Date(transaction.created_at).toLocaleString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
