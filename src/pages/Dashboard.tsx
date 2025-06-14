@@ -92,8 +92,15 @@ const Dashboard = () => {
         });
 
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred.");
+        console.error("Error fetching dashboard data (friendly message):", err instanceof Error ? err.message : String(err));
+        console.error("Raw error object fetching dashboard data:", err); // Detailed log
+        // Attempt to stringify if it's a complex object, otherwise direct log is fine.
+        // try {
+        //   console.error("Raw error object (stringified):", JSON.stringify(err, null, 2));
+        // } catch (e) {
+        //   console.error("Could not stringify error object:", e);
+        // }
+        setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
       } finally {
         setIsLoading(false);
       }
