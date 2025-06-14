@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,10 @@ const Auth = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    document.title = "Sign In / Sign Up - CCMC Bank";
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

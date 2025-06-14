@@ -10,6 +10,10 @@ const PendingApproval = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = "Pending Approval - CCMC Bank";
+  }, []);
+
   // useEffect for initial redirection check
   useEffect(() => {
     // Don't redirect if auth is still loading, as status might not be accurate yet

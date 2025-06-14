@@ -19,6 +19,10 @@ const Loans = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = "My Loans - CCMC Bank";
+  }, []);
+
+  useEffect(() => {
     if (authLoading || !user || !profile?.id) {
       if (!authLoading) setIsLoading(false); // Stop loading if auth is done but no user/profile
       return;

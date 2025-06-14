@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,10 @@ const Profiles = () => {
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
   const [address, setAddress] = useState(profile?.address || "");
+
+  useEffect(() => {
+    document.title = "My Profile - CCMC Bank";
+  }, []);
 
   // useEffect to sync local state when profile from context changes
   useEffect(() => {

@@ -47,6 +47,10 @@ const Dashboard = () => {
   // Removed dummyAccounts
 
   useEffect(() => {
+    document.title = "Dashboard - CCMC Bank";
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (!user || !profile?.id) {
         setIsLoading(false);

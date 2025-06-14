@@ -23,6 +23,10 @@ const Statements = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = "Account Statements - CCMC Bank";
+  }, []);
+
+  useEffect(() => {
     if (!user || !profile?.id || authLoading) {
       if (!authLoading) setIsLoading(false);
       return;
@@ -35,8 +39,8 @@ const Statements = () => {
         // Fetch statements for the customer
         const { data: statementsData, error: statementsError } = await supabase
           .from("statements")
-          .select("*, accounts(account_name, account_number)") // Changed 'name' to 'account_name'
-          .eq("customer_id", profile.id)
+          .select("*, accounts!inner(account_name, account_number)") // Ensure accounts are loaded via inner join
+          .eq("accounts.user_id", profile.id) // Filter by user_id on the joined accounts table
           .order("statement_date", { ascending: false });
 
         if (statementsError) throw statementsError;

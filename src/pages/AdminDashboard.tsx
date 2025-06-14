@@ -83,6 +83,10 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    document.title = "Admin Dashboard - CCMC Bank";
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />

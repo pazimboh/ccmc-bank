@@ -11,6 +11,10 @@ const NotFound = () => {
     );
   }, [location.pathname]);
 
+  useEffect(() => {
+    document.title = "Page Not Found - CCMC Bank";
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">

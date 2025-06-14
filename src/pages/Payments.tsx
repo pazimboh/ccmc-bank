@@ -98,6 +98,10 @@ const Payments = () => {
   };
 
   useEffect(() => {
+    document.title = "Payments - CCMC Bank";
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && user && profile?.id) {
       fetchPageData();
     } else if (!authLoading) {

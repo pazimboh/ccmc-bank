@@ -105,6 +105,10 @@ const ApplyLoan = () => {
     }
   }, [profile, user]);
 
+  useEffect(() => {
+    document.title = "Apply for Loan - CCMC Bank";
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-gray-50">

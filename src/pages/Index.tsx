@@ -1,4 +1,4 @@
-
+import { useEffect } from "react"; // Added useEffect
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import BankFeatures from "@/components/BankFeatures";
@@ -7,6 +7,10 @@ import ServicesSection from "@/components/ServicesSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
+  useEffect(() => {
+    document.title = "Welcome - CCMC Bank";
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary py-4">

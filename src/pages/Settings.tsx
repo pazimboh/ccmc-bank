@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
+
+  useEffect(() => {
+    document.title = "Settings - CCMC Bank";
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
