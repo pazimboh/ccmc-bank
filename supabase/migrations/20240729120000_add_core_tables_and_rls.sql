@@ -157,12 +157,21 @@ DROP POLICY IF EXISTS "Users can view their own transactions" ON public.transact
 CREATE POLICY "Users can view their own transactions" ON public.transactions
     FOR SELECT USING (auth.uid() = customer_id);
 
-DROP POLICY IF EXISTS "Users can insert their own transactions" ON public.transactions;
-CREATE POLICY "Users can insert their own transactions" ON public.transactions
+DROP POLICY IF EXISTS "Users can insert their own transactions" ON public.transactions; -- Drop old policy by its name
+DROP POLICY IF EXISTS "Users can insert transactions related to their actions" ON public.transactions; -- Drop new policy name (good practice)
+CREATE POLICY "Users can insert transactions related to their actions" ON public.transactions
     FOR INSERT WITH CHECK (
-        auth.uid() = customer_id AND
-        -- Further check: ensure the transaction relates to an account owned by the user if from_account is present
-        (from_account IS NULL OR EXISTS (SELECT 1 FROM public.accounts acc WHERE acc.account_number = from_account AND acc.customer_id = auth.uid()))
+        (
+            -- Case 1: User is the direct customer for the transaction (e.g., their own debit, their own deposit)
+            auth.uid() = customer_id AND
+            (from_account IS NULL OR EXISTS (SELECT 1 FROM public.accounts acc WHERE acc.account_number = from_account AND acc.customer_id = auth.uid()))
+        ) OR (
+            -- Case 2: Specific case for inserting recipient's 'transfer_in' record during an internal transfer.
+            -- The transaction is a 'transfer_in', the 'customer_id' on the transaction is the recipient's,
+            -- and the sender (auth.uid()) owns the 'from_account' specified in the transaction.
+            transaction_type = 'transfer_in' AND
+            EXISTS (SELECT 1 FROM public.accounts acc WHERE acc.account_number = from_account AND acc.customer_id = auth.uid())
+        )
     );
 
 -- Policy for users to update status of transactions they own (e.g. cancel a pending one, if applicable by app logic)
