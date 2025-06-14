@@ -14,6 +14,11 @@ import Dashboard from "./pages/Dashboard";
 import ApplyLoan from "./pages/ApplyLoan";
 import AdminDashboard from "./pages/AdminDashboard";
 import PendingApproval from "./pages/PendingApproval";
+import Payments from "./pages/Payments";
+import Loans from "./pages/Loans";
+import Statements from "./pages/Statements";
+import Settings from "./pages/Settings";
+import Profiles from "./pages/Profiles";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +36,11 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/apply-loan" element={<ProtectedRoute><ApplyLoan /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+            <Route path="/loans" element={<ProtectedRoute><Loans /></ProtectedRoute>} />
+            <Route path="/statements" element={<ProtectedRoute><Statements /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profiles /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

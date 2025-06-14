@@ -108,6 +108,46 @@ export type Database = {
           },
         ]
       }
+      accounts: { // Added accounts table schema
+        Row: {
+          id: string
+          customer_id: string
+          name: string
+          type: string
+          balance: number
+          account_number: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          name: string
+          type: string
+          balance: number
+          account_number: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          name?: string
+          type?: string
+          balance?: number
+          account_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           account_type: string | null
@@ -143,6 +183,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      statements: { // Added statements table schema
+        Row: {
+          id: string
+          account_id: string
+          customer_id: string
+          statement_date: string
+          period_start_date: string
+          period_end_date: string
+          opening_balance: number
+          closing_balance: number
+          total_credits: number
+          total_debits: number
+          file_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          customer_id: string
+          statement_date: string
+          period_start_date: string
+          period_end_date: string
+          opening_balance: number
+          closing_balance: number
+          total_credits: number
+          total_debits: number
+          file_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          // Assuming most fields are not directly updatable once a statement is generated
+          file_url?: string | null // Example: if a statement is regenerated
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       security_events: {
         Row: {

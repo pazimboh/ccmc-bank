@@ -12,12 +12,28 @@ import { ArrowLeft, Calculator, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
+import { Textarea } from "@/components/ui/textarea"; // For loan purpose
 
 const ApplyLoan = () => {
   const { toast } = useToast();
+  const { user, profile } = useAuth(); // Get user and profile for customer_id
+
   const [loanType, setLoanType] = useState("");
   const [loanAmount, setLoanAmount] = useState(5000);
   const [loanTerm, setLoanTerm] = useState(36); // months
+  const [loanPurpose, setLoanPurpose] = useState(""); // Added state for loan purpose
+  // Personal info fields - assuming these are for context/verification, not directly stored in `loans` table per this task
+  const [firstName, setFirstName] = useState(profile?.first_name || "");
+  const [lastName, setLastName] = useState(profile?.last_name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(profile?.phone || "");
+  const [annualIncome, setAnnualIncome] = useState("");
+  const [employmentStatus, setEmploymentStatus] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Calculated fields
@@ -26,18 +42,70 @@ const ApplyLoan = () => {
   const totalPayment = monthlyPayment * loanTerm;
   const totalInterest = totalPayment - loanAmount;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user || !profile?.id) {
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in to apply for a loan." });
+      return;
+    }
+    if (!loanType || !loanPurpose.trim() || !annualIncome.trim() || !employmentStatus || !agreedToTerms) {
+        toast({ variant: "destructive", title: "Validation Error", description: "Please fill in all required fields and agree to terms." });
+        return;
+    }
+
     setIsSubmitting(true);
-    
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const loanApplicationData = {
+        customer_id: profile.id,
+        loan_type: loanType,
+        amount: loanAmount,
+        term_months: loanTerm,
+        purpose: loanPurpose.trim(),
+        status: "pending", // Default status for new applications
+        // credit_score could be null or determined later by admin
+      };
+
+      const { error } = await supabase.from("loans").insert(loanApplicationData);
+
+      if (error) throw error;
+
       toast({
-        title: "Loan application submitted",
-        description: "Your application has been received and is pending review.",
+        title: "Loan application submitted successfully!",
+        description: "Your application (ID: ...) has been received and is pending review.", // Consider getting ID back if needed
       });
-    }, 1500);
+      // Optionally reset form fields here
+      setLoanType("");
+      setLoanAmount(5000);
+      setLoanTerm(36);
+      setLoanPurpose("");
+      setAnnualIncome("");
+      setEmploymentStatus("");
+      setAgreedToTerms(false);
+
+    } catch (err) {
+      console.error("Error submitting loan application:", err);
+      toast({
+        variant: "destructive",
+        title: "Application Failed",
+        description: err instanceof Error ? err.message : "Could not submit your loan application. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // Sync personal info from profile when it loads
+  useEffect(() => {
+    if (profile) {
+        setFirstName(profile.first_name || "");
+        setLastName(profile.last_name || "");
+        setPhone(profile.phone || "");
+    }
+    if (user) {
+        setEmail(user.email || "");
+    }
+  }, [profile, user]);
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,88 +136,84 @@ const ApplyLoan = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">1. Loan Details</h3>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="loanType">Loan Type</Label>
-                      <Select value={loanType} onValueChange={setLoanType} required>
-                        <SelectTrigger id="loanType">
-                          <SelectValue placeholder="Select a loan type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="personal">Personal Loan</SelectItem>
-                          <SelectItem value="auto">Auto Loan</SelectItem>
-                          <SelectItem value="home">Home Loan</SelectItem>
-                          <SelectItem value="business">Business Loan</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="loanAmount">Loan Amount: ${loanAmount.toLocaleString()}</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="loanType">Loan Type *</Label>
+                        <Select value={loanType} onValueChange={setLoanType} required>
+                          <SelectTrigger id="loanType"><SelectValue placeholder="Select a loan type" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="personal">Personal Loan</SelectItem>
+                            <SelectItem value="auto">Auto Loan</SelectItem>
+                            <SelectItem value="home">Home Loan</SelectItem>
+                            <SelectItem value="business">Business Loan</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Slider 
-                        defaultValue={[5000]} 
-                        max={50000} 
-                        step={100} 
-                        onValueChange={([value]) => setLoanAmount(value)} 
-                      />
+                    
+                      <div className="space-y-2">
+                        <Label htmlFor="loanAmount">Loan Amount: {loanAmount.toLocaleString()} FCFA</Label>
+                      </div>
+                      <Slider defaultValue={[loanAmount]} max={10000000} step={50000} onValueChange={([value]) => setLoanAmount(value)} />
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>$1,000</span>
-                        <span>$50,000</span>
+                        <span>100,000 FCFA</span>
+                        <span>10,000,000 FCFA</span>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center">
                         <Label htmlFor="loanTerm">Loan Term: {loanTerm} months</Label>
-                      </div>
-                      <Slider 
-                        defaultValue={[36]} 
-                        min={12}
-                        max={84} 
-                        step={12} 
-                        onValueChange={([value]) => setLoanTerm(value)} 
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>12 months</span>
-                        <span>84 months</span>
-                      </div>
+                    </div>
+                    <Slider defaultValue={[loanTerm]} min={6} max={120} step={6} onValueChange={([value]) => setLoanTerm(value)} />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>6 months</span>
+                        <span>120 months</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="loanPurpose">Loan Purpose *</Label>
+                        <Textarea
+                            id="loanPurpose"
+                            placeholder="E.g., Purchase a new car, home renovation, business expansion"
+                            value={loanPurpose}
+                            onChange={(e) => setLoanPurpose(e.target.value)}
+                            required
+                        />
                     </div>
                   </div>
                   
                   <Separator />
                   
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">2. Personal Information</h3>
+                    <h3 className="text-lg font-medium">2. Personal Information (Auto-filled)</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" required />
+                        <Input id="firstName" value={firstName} disabled />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" required />
+                        <Input id="lastName" value={lastName} disabled />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" required />
+                        <Input id="email" type="email" value={email} disabled />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" type="tel" required />
+                        <Input id="phone" type="tel" value={phone} disabled />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="income">Annual Income</Label>
+                        <Label htmlFor="income">Annual Income (FCFA)</Label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                          <Input id="income" type="number" className="pl-8" required />
+                          {/* <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span> */}
+                          <Input id="income" type="number" className="pl-3" required />
+                          {/* Adjusted padding since FCFA will be in label or placeholder */}
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -211,7 +275,7 @@ const ApplyLoan = () => {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="mb-4">
                     <span className="text-sm text-muted-foreground">Estimated Monthly Payment</span>
-                    <p className="text-3xl font-bold">${isNaN(monthlyPayment) ? "0.00" : monthlyPayment.toFixed(2)}</p>
+                    <p className="text-3xl font-bold">{isNaN(monthlyPayment) ? "0.00" : monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FCFA</p>
                   </div>
                   
                   <Separator />
@@ -219,7 +283,7 @@ const ApplyLoan = () => {
                   <div className="pt-4 space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm">Loan Amount:</span>
-                      <span className="font-medium">${loanAmount.toLocaleString()}</span>
+                      <span className="font-medium">{loanAmount.toLocaleString()} FCFA</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Interest Rate:</span>
@@ -232,11 +296,11 @@ const ApplyLoan = () => {
                     <Separator className="my-2" />
                     <div className="flex justify-between">
                       <span className="text-sm">Total Interest:</span>
-                      <span className="font-medium">${isNaN(totalInterest) ? "0.00" : totalInterest.toFixed(2)}</span>
+                      <span className="font-medium">{isNaN(totalInterest) ? "0.00" : totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FCFA</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Total Payment:</span>
-                      <span className="font-medium">${isNaN(totalPayment) ? "0.00" : totalPayment.toFixed(2)}</span>
+                      <span className="font-medium">{isNaN(totalPayment) ? "0.00" : totalPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} FCFA</span>
                     </div>
                   </div>
                 </div>
