@@ -76,7 +76,28 @@ const DashboardNav = ({ activeTab, setActiveTab }: DashboardNavProps) => {
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
-            onClick={() => setActiveTab(item.id)}
+            onClick={(e) => {
+              const isDashboardTabItem = ["overview", "accounts", "transfers"].includes(item.id);
+              // If the item is one that corresponds to a Tab on the Dashboard page
+              if (isDashboardTabItem) {
+                // Prevent full page navigation for "accounts" and "transfers"
+                // as they are handled by Tabs within Dashboard.tsx.
+                // For "overview", href is /dashboard, so no real navigation if already there,
+                // but preventDefault is harmless.
+                if (item.id === "accounts" || item.id === "transfers") {
+                  e.preventDefault();
+                }
+                // Also, if current path is already the item's href (e.g. already on /dashboard for overview)
+                // it's good to prevent default to avoid unnecessary react-router actions.
+                if (window.location.pathname === item.href) {
+                  e.preventDefault();
+                }
+              }
+              // Always set the active tab. This will control the Tabs in Dashboard.tsx
+              setActiveTab(item.id);
+              // For other items not part of Dashboard tabs (e.g., "loans", "settings"),
+              // the Link will navigate to item.href as usual if e.preventDefault() was not called.
+            }}
           >
             <item.icon className="h-4 w-4" />
             {item.label}
