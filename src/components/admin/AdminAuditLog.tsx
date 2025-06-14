@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,8 +46,14 @@ const AdminAuditLog = () => {
         return;
       }
 
-      setAuditLogs(data || []);
-      setFilteredLogs(data || []);
+      // Transform the data to match our interface
+      const transformedData: AuditLogEntry[] = (data || []).map(log => ({
+        ...log,
+        ip_address: log.ip_address ? String(log.ip_address) : null,
+      }));
+
+      setAuditLogs(transformedData);
+      setFilteredLogs(transformedData);
     } catch (error) {
       console.error('Error:', error);
     } finally {

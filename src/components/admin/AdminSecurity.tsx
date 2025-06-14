@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,15 @@ const AdminSecurity = () => {
 
       if (settingsError) throw settingsError;
 
-      setSecurityEvents(eventsData || []);
+      // Transform security events data
+      const transformedEvents: SecurityEvent[] = (eventsData || []).map(event => ({
+        ...event,
+        ip_address: event.ip_address ? String(event.ip_address) : null,
+        severity: event.severity || 'medium',
+        resolved: event.resolved || false,
+      }));
+
+      setSecurityEvents(transformedEvents);
       
       // Parse settings
       const settings: SecuritySettings = {

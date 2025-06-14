@@ -67,11 +67,11 @@ const AdminSettings = () => {
           // Keep as is
         } else if (value === 'true' || value === 'false') {
           value = value === 'true';
-        } else if (!isNaN(Number(value))) {
+        } else if (typeof value === 'string' && !isNaN(Number(value))) {
           value = Number(value);
         }
         
-        settingsMap[key] = value;
+        (settingsMap as any)[key] = value;
       });
 
       setSettings(prev => ({ ...prev, ...settingsMap }));
