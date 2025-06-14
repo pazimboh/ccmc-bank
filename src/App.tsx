@@ -10,6 +10,7 @@ import GuestRoute from "@/components/GuestRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ApplyLoan from "./pages/ApplyLoan";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<GuestRoute><Index /></GuestRoute>} />
             <Route path="/auth" element={<GuestRoute><Auth /></GuestRoute>} />
+            <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/apply-loan" element={<ProtectedRoute><ApplyLoan /></ProtectedRoute>} />
