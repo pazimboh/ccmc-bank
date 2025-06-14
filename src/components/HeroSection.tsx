@@ -15,7 +15,7 @@ const HeroSection = () => {
                 <Button size="lg" className="w-full sm:w-auto">Get Started</Button>
               </Link>
               <Link to="/about">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-blue-900">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-black hover:bg-white hover:text-blue-900">
                   Learn More
                 </Button>
               </Link>
@@ -25,7 +25,7 @@ const HeroSection = () => {
             <div className="bg-white rounded-lg shadow-xl p-6 text-gray-800">
               <h3 className="text-2xl font-semibold mb-4 text-blue-900">Quick Actions</h3>
               <div className="space-y-4">
-                <Link to="/login" className="block p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition duration-300">
+                <Link to="/auth" className="block p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition duration-300">
                   <div className="flex items-center">
                     <div className="bg-blue-100 rounded-full p-3 mr-4">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-900">
