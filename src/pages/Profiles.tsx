@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
 import { useToast } from "@/hooks/use-toast"; // Import useToast
 import { AlertCircle } from "lucide-react";
+import { useEffect } from "react";
 
 const Profiles = () => {
   const [activeTab, setActiveTab] = useState("profile");
