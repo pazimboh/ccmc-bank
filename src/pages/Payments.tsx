@@ -71,7 +71,7 @@ const Payments = () => {
       const { data: accountsData, error: accountsError } = await supabase
         .from("accounts")
         .select("*")
-        .eq("customer_id", profile.id);
+        .eq("user_id", profile.id); // Changed "customer_id" to "user_id"
       if (accountsError) throw accountsError;
       setAccounts(accountsData || []);
       if (accountsData && accountsData.length > 0 && !form.getValues("fromAccountId")) {

@@ -35,7 +35,7 @@ const Statements = () => {
         // Fetch statements for the customer
         const { data: statementsData, error: statementsError } = await supabase
           .from("statements")
-          .select("*, accounts(name, account_number)") // Join with accounts table
+          .select("*, accounts(account_name, account_number)") // Changed 'name' to 'account_name'
           .eq("customer_id", profile.id)
           .order("statement_date", { ascending: false });
 
@@ -46,7 +46,7 @@ const Statements = () => {
           const accountInfo = Array.isArray(s.accounts) ? s.accounts[0] : s.accounts; // Handle potential array from join
           return {
             ...s,
-            account_name: accountInfo?.name,
+            account_name: accountInfo?.account_name, // Changed to access accountInfo?.account_name
             account_number: accountInfo?.account_number,
           };
         });
