@@ -37,9 +37,9 @@ const paymentFormSchema = z.object({
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-const Payments = () => {
-  const [activeTab, setActiveTab] = useState("payments");
-  const { profile, user, isLoading: authLoading, refreshUserData } = useAuth(); // Added refreshUserData
+const Transfer = () => { // Renamed component
+  const [activeTab, setActiveTab] = useState("transfer"); // Updated activeTab
+  const { profile, user, isLoading: authLoading, refreshUserData } = useAuth();
   const { toast } = useToast();
 
   const [accounts, setAccounts] = useState<Tables<"accounts">[]>([]);
@@ -98,7 +98,7 @@ const Payments = () => {
   };
 
   useEffect(() => {
-    document.title = "Payments - CCMC Bank";
+    document.title = "Transfer - CCMC Bank"; // Updated document title
   }, []);
 
   useEffect(() => {
@@ -408,4 +408,4 @@ const Payments = () => {
   );
 };
 
-export default Payments;
+export default Transfer; // Updated export

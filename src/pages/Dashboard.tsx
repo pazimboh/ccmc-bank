@@ -9,7 +9,7 @@ import DashboardNav from "@/components/dashboard/DashboardNav";
 import RecentTransactions, { TransactionDisplayItem } from "@/components/dashboard/RecentTransactions";
 import AccountSummary from "@/components/dashboard/AccountSummary";
 import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom"; // Imported useSearchParams
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -49,6 +49,17 @@ const Dashboard = () => {
   useEffect(() => {
     document.title = "Dashboard - CCMC Bank";
   }, []);
+
+  // Effect to sync activeTab with URL query parameter 'tab'
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const tabFromQuery = searchParams.get("tab");
+    if (tabFromQuery === "accounts") {
+      setActiveTab("accounts");
+    } else { // Default to overview if tab is not 'accounts' or not present
+      setActiveTab("overview");
+    }
+  }, [searchParams]); // Removed setActiveTab from deps as it's a stable setter
 
   useEffect(() => {
     const fetchData = async () => {
@@ -158,10 +169,10 @@ const Dashboard = () => {
         <main className="flex-1 p-6">
           <div className="container mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsList className="grid w-full max-w-md grid-cols-2"> {/* Changed grid-cols-3 to grid-cols-2 */}
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="accounts">Accounts</TabsTrigger>
-                <TabsTrigger value="transfers">Transfers</TabsTrigger>
+                {/* Removed Transfers tab trigger */}
               </TabsList>
               
               <TabsContent value="overview" className="space-y-6">
@@ -332,41 +343,7 @@ const Dashboard = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="transfers" className="space-y-6">
-                <h1 className="text-3xl font-bold">Transfer Money</h1>
-                <p className="text-muted-foreground">Move money between your accounts or to other recipients</p>
-                
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Make a Transfer</CardTitle>
-                      <CardDescription>Transfer funds between your accounts</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-center text-muted-foreground p-6">
-                        Transfer functionality will be implemented when connected to Supabase backend.
-                      </p>
-                      <Button className="w-full" disabled>
-                        Transfer Funds
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pay Someone</CardTitle>
-                      <CardDescription>Send money to other people or businesses</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-center text-muted-foreground p-6">
-                        Payment functionality will be implemented when connected to Supabase backend.
-                      </p>
-                      <Button className="w-full" disabled>
-                        Make Payment
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+              {/* Removed TabsContent for value="transfers" */}
             </Tabs>
           </div>
         </main>

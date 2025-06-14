@@ -55,8 +55,8 @@ const DashboardHeader = () => {
                     <Link to="/transfers" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Transfers
                     </Link>
-                    <Link to="/payments" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
-                      Payments
+                    <Link to="/transfer" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                      Transfer
                     </Link>
                     <Link to="/loans" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Loans

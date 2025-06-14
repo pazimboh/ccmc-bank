@@ -22,25 +22,20 @@ const navItems = [
     id: "overview",
     label: "Overview",
     icon: Home,
-    href: "/dashboard",
+    href: "/dashboard?tab=overview", // Added query param
   },
   {
     id: "accounts",
     label: "Accounts",
     icon: CreditCard,
-    href: "/accounts",
+    href: "/dashboard?tab=accounts", // Changed href and added query param
   },
+  // Removed the "Transfers" item that pointed to a Dashboard tab (id: "transfers")
   {
-    id: "transfers",
-    label: "Transfers",
-    icon: DollarSign,
-    href: "/transfers",
-  },
-  {
-    id: "payments",
-    label: "Payments",
+    id: "transfer",
+    label: "Transfer",
     icon: Landmark,
-    href: "/payments",
+    href: "/transfer",
   },
   {
     id: "loans",
@@ -76,27 +71,18 @@ const DashboardNav = ({ activeTab, setActiveTab }: DashboardNavProps) => {
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
-            onClick={(e) => {
-              const isDashboardTabItem = ["overview", "accounts", "transfers"].includes(item.id);
-              // If the item is one that corresponds to a Tab on the Dashboard page
-              if (isDashboardTabItem) {
-                // Prevent full page navigation for "accounts" and "transfers"
-                // as they are handled by Tabs within Dashboard.tsx.
-                // For "overview", href is /dashboard, so no real navigation if already there,
-                // but preventDefault is harmless.
-                if (item.id === "accounts" || item.id === "transfers") {
-                  e.preventDefault();
-                }
-                // Also, if current path is already the item's href (e.g. already on /dashboard for overview)
-                // it's good to prevent default to avoid unnecessary react-router actions.
-                if (window.location.pathname === item.href) {
-                  e.preventDefault();
-                }
+            onClick={() => {
+              // If the item is one of the dashboard tabs, call setActiveTab for immediate UI update.
+              // Navigation is now handled by the Link component via href with query params.
+              if (item.id === "overview" || item.id === "accounts") {
+                setActiveTab(item.id);
+              } else {
+                // For other links that navigate away from the main dashboard's tab system,
+                // still call setActiveTab to highlight them if they are top-level pages.
+                setActiveTab(item.id);
               }
-              // Always set the active tab. This will control the Tabs in Dashboard.tsx
-              setActiveTab(item.id);
-              // For other items not part of Dashboard tabs (e.g., "loans", "settings"),
-              // the Link will navigate to item.href as usual if e.preventDefault() was not called.
+              // No e.preventDefault() needed here anymore for overview/accounts,
+              // as Link component will handle navigation.
             }}
           >
             <item.icon className="h-4 w-4" />
