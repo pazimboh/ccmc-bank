@@ -53,8 +53,9 @@ const Statements = () => {
         setStatements(combinedData);
 
       } catch (err) {
-        console.error("Error fetching statements:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred.");
+        console.error("Error fetching statements (friendly message):", err instanceof Error ? err.message : String(err));
+        console.error("Raw error object fetching statements:", err); // Detailed log
+        setError(err instanceof Error ? err.message : "An unknown error occurred while fetching statements.");
       } finally {
         setIsLoading(false);
       }
