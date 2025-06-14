@@ -2,32 +2,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Clock, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { useNavigate } from "react-router-dom";
 
 const PendingApproval = () => {
-  const { signOut, profile, refreshUserData, isApproved, isAdmin } = useAuth();
+  const { signOut, profile, refreshUserData, isApproved, isAdmin, isLoading: authIsLoading } = useAuth(); // Added authIsLoading
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
+
+  // useEffect for initial redirection check
+  useEffect(() => {
+    // Don't redirect if auth is still loading, as status might not be accurate yet
+    if (authIsLoading) {
+      return;
+    }
+
+    if (isAdmin) {
+      console.log('User is admin (on mount/status change), redirecting to admin dashboard');
+      navigate('/admin', { replace: true });
+    } else if (isApproved) {
+      console.log('User is approved (on mount/status change), redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+    // If neither, user stays on this page.
+  }, [isApproved, isAdmin, navigate, authIsLoading]);
+
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refreshUserData();
-      
-      // After refreshing data, check if user should be redirected
-      // Use setTimeout to ensure state has been updated
-      setTimeout(() => {
-        if (isAdmin) {
-          console.log('User is admin, redirecting to admin dashboard');
-          navigate('/admin');
-        } else if (isApproved) {
-          console.log('User is approved, redirecting to dashboard');
-          navigate('/dashboard');
-        }
-        // If still pending, stay on this page
-      }, 100);
-      
+      // The useEffect above will handle redirection if status changes after refresh.
+      // No need for setTimeout and manual navigation here anymore if useEffect is robust.
+      // However, if refreshUserData updates isApproved/isAdmin synchronously AND
+      // the component doesn't re-render fast enough for useEffect, direct nav might still be desired.
+      // For now, relying on useEffect. If issues, can add back direct nav post-refresh.
     } catch (error) {
       console.error('Error refreshing user data:', error);
     } finally {
