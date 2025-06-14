@@ -157,7 +157,7 @@ const ApplyLoan = () => {
                         <span>100,000 FCFA</span>
                         <span>10,000,000 FCFA</span>
                       </div>
-                    </div>
+                    {/* Removed extra closing </div> here */}
                     
                     <div className="space-y-2">
                         <Label htmlFor="loanTerm">Loan Term: {loanTerm} months</Label>
