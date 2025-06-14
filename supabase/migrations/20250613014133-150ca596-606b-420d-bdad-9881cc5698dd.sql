@@ -39,6 +39,11 @@ CREATE POLICY "Customers can view their own loans"
   FOR SELECT 
   USING (customer_id = auth.uid());
 
+CREATE POLICY "Customers can insert their own loan applications"
+  ON public.loans
+  FOR INSERT
+  WITH CHECK (customer_id = auth.uid());
+
 -- Create transactions table for transaction logging
 CREATE TABLE public.transactions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
