@@ -211,13 +211,24 @@ const ApplyLoan = () => {
                         <Label htmlFor="income">Annual Income (FCFA)</Label>
                         <div className="relative">
                           {/* <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span> */}
-                          <Input id="income" type="number" className="pl-3" required />
+                          <Input
+                            id="income"
+                            type="number"
+                            className="pl-3"
+                            value={annualIncome}
+                            onChange={(e) => setAnnualIncome(e.target.value)}
+                            required
+                          />
                           {/* Adjusted padding since FCFA will be in label or placeholder */}
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="employment">Employment Status</Label>
-                        <Select required>
+                        <Select
+                          value={employmentStatus}
+                          onValueChange={setEmploymentStatus}
+                          required
+                        >
                           <SelectTrigger id="employment">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
@@ -237,7 +248,12 @@ const ApplyLoan = () => {
                   
                   <div className="space-y-4">
                     <div className="flex items-start space-x-2">
-                      <Checkbox id="terms" required />
+                      <Checkbox
+                        id="terms"
+                        checked={agreedToTerms}
+                        onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                        required
+                      />
                       <div className="grid gap-1.5 leading-none">
                         <label
                           htmlFor="terms"
