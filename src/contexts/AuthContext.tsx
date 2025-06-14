@@ -113,13 +113,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setUserRole(null);
-      window.location.href = '/';
+      // State updates (setUser, setSession, setProfile, setUserRole) and navigation
+      // will now be handled by the onAuthStateChange listener and the UI component respectively.
     } catch (error) {
       console.error('Error signing out:', error);
+      // Optionally, re-throw or handle UI feedback if needed, though onAuthStateChange should eventually reflect failure.
     }
   };
 
@@ -133,14 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlocks, but don't set loading to false here
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
+          // Fetch user data directly without setTimeout
+          await fetchUserData(session.user.id); // Ensure fetchUserData sets isLoading appropriately
         } else {
+          // Clear profile and role, set loading to false as there's no user data to fetch
           setProfile(null);
           setUserRole(null);
-          setIsLoading(false); // Only set loading to false when there's no user
+          setIsLoading(false);
         }
       }
     );

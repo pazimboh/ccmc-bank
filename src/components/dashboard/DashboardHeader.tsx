@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { 
   Bell, 
   Menu, 
@@ -23,12 +23,18 @@ import { useAuth } from "@/contexts/AuthContext";
 const DashboardHeader = () => {
   const { toast } = useToast();
   const { signOut, profile } = useAuth();
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleNotificationClick = () => {
     toast({
       title: "No new notifications",
       description: "You're all caught up!",
     });
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
   };
 
   return (
@@ -55,8 +61,8 @@ const DashboardHeader = () => {
                     <Link to="/transfers" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Transfers
                     </Link>
-                    <Link to="/transfer" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
-                      Transfer
+                    <Link to="/payments" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                      Payments
                     </Link>
                     <Link to="/loans" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Loans
@@ -105,7 +111,7 @@ const DashboardHeader = () => {
                   <Link to="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
+                <DropdownMenuItem onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -135,7 +141,7 @@ const DashboardHeader = () => {
                   <Link to="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
+                <DropdownMenuItem onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

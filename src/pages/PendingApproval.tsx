@@ -10,6 +10,11 @@ const PendingApproval = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
+
   useEffect(() => {
     document.title = "Pending Approval - CCMC Bank";
   }, []);
@@ -53,7 +58,7 @@ const PendingApproval = () => {
       <header className="bg-primary py-4">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary-foreground">CCMC Bank</h1>
-          <Button variant="secondary" onClick={signOut}>
+          <Button variant="secondary" onClick={handleLogout}>
             Sign Out
           </Button>
         </div>
@@ -104,7 +109,7 @@ const PendingApproval = () => {
               <p className="text-sm text-gray-500 mb-3">
                 Need help? Contact us at support@ccmcbank.com or (237) 653-225-597
               </p>
-              <Button variant="outline" onClick={signOut} className="w-full">
+              <Button variant="outline" onClick={handleLogout} className="w-full">
                 Sign Out
               </Button>
             </div>
