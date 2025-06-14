@@ -1,7 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +26,9 @@ interface Transaction {
 
 const AdminTransactionLog = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const fetchTransactions = async () => {
@@ -32,10 +37,10 @@ const AdminTransactionLog = () => {
         .from('transactions')
         .select(`
           *,
-          customer:profiles(first_name, last_name)
+          customer:profiles!customer_id(first_name, last_name)
         `)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) {
         console.error('Error fetching transactions:', error);
@@ -48,11 +53,64 @@ const AdminTransactionLog = () => {
       }
 
       setTransactions(data || []);
+      setFilteredTransactions(data || []);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (!term.trim()) {
+      setFilteredTransactions(transactions);
+      return;
+    }
+
+    const filtered = transactions.filter(transaction =>
+      transaction.transaction_id.toLowerCase().includes(term.toLowerCase()) ||
+      transaction.transaction_type.toLowerCase().includes(term.toLowerCase()) ||
+      (transaction.customer && 
+        `${transaction.customer.first_name} ${transaction.customer.last_name}`
+          .toLowerCase().includes(term.toLowerCase())) ||
+      (transaction.from_account && transaction.from_account.toLowerCase().includes(term.toLowerCase())) ||
+      (transaction.to_account && transaction.to_account.toLowerCase().includes(term.toLowerCase()))
+    );
+    setFilteredTransactions(filtered);
+  };
+
+  const exportLog = () => {
+    const csvData = filteredTransactions.map(transaction => ({
+      'Transaction ID': transaction.transaction_id,
+      'Customer': transaction.customer ? 
+        `${transaction.customer.first_name} ${transaction.customer.last_name}` : 'N/A',
+      'Type': transaction.transaction_type,
+      'From Account': transaction.from_account || 'N/A',
+      'To Account': transaction.to_account || 'N/A',
+      'Amount (FCFA)': transaction.amount,
+      'Status': transaction.status,
+      'Date': new Date(transaction.created_at).toLocaleString()
+    }));
+
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transaction-log-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Successful",
+      description: `${filteredTransactions.length} transactions exported`,
+    });
   };
 
   useEffect(() => {
@@ -93,9 +151,24 @@ const AdminTransactionLog = () => {
 
   return (
     <div className="space-y-4">
-      {transactions.length === 0 ? (
+      <div className="flex justify-between items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button onClick={exportLog} disabled={filteredTransactions.length === 0}>
+          Export Log ({filteredTransactions.length})
+        </Button>
+      </div>
+
+      {filteredTransactions.length === 0 ? (
         <div className="p-6 text-center text-muted-foreground">
-          No transactions found.
+          {searchTerm ? `No transactions found matching "${searchTerm}"` : "No transactions found."}
         </div>
       ) : (
         <Table>
@@ -112,7 +185,7 @@ const AdminTransactionLog = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell className="font-mono text-sm">
                   {transaction.transaction_id}

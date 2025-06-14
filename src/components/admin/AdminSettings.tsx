@@ -1,227 +1,344 @@
-
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Save, Settings, Bell, Mail, Database } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface SystemSettings {
+  bank_name: string;
+  admin_email: string;
+  support_phone: string;
+  bank_address: string;
+  min_credit_score: number;
+  max_loan_amount: number;
+  default_interest_rate: number;
+  auto_approval_limit: number;
+  auto_backup: boolean;
+  backup_time: string;
+  loan_notifications: boolean;
+  customer_notifications: boolean;
+  security_alerts: boolean;
+  daily_reports: boolean;
+}
 
 const AdminSettings = () => {
+  const [settings, setSettings] = useState<SystemSettings>({
+    bank_name: '',
+    admin_email: '',
+    support_phone: '',
+    bank_address: '',
+    min_credit_score: 600,
+    max_loan_amount: 200000000,
+    default_interest_rate: 5.0,
+    auto_approval_limit: 1000000,
+    auto_backup: true,
+    backup_time: '02:00',
+    loan_notifications: true,
+    customer_notifications: true,
+    security_alerts: true,
+    daily_reports: false,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value');
+
+      if (error) throw error;
+
+      const settingsMap: Partial<SystemSettings> = {};
+      
+      data?.forEach(setting => {
+        const key = setting.setting_key as keyof SystemSettings;
+        let value = setting.setting_value;
+        
+        // Parse JSON values and convert types as needed
+        if (typeof value === 'string' && value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1); // Remove quotes
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          // Keep as is
+        } else if (value === 'true' || value === 'false') {
+          value = value === 'true';
+        } else if (!isNaN(Number(value))) {
+          value = Number(value);
+        }
+        
+        settingsMap[key] = value;
+      });
+
+      setSettings(prev => ({ ...prev, ...settingsMap }));
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch system settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Convert settings to array of updates
+      const updates = Object.entries(settings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: typeof value === 'string' ? `"${value}"` : value,
+        updated_at: new Date().toISOString()
+      }));
+
+      // Update each setting
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('system_settings')
+          .update({
+            setting_value: update.setting_value,
+            updated_at: update.updated_at
+          })
+          .eq('setting_key', update.setting_key);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Settings Saved",
+        description: "All system settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save system settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleInputChange = (key: keyof SystemSettings, value: string | number | boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  if (isLoading) {
+    return <div className="p-4">Loading system settings...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">System Settings</h1>
-          <p className="text-muted-foreground">Configure system preferences and operational settings</p>
+          <p className="text-muted-foreground">Configure system parameters and preferences</p>
         </div>
-        <Button>
-          <Save className="h-4 w-4 mr-2" />
-          Save All Changes
+        <Button onClick={saveSettings} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              General Settings
-            </CardTitle>
-            <CardDescription>Basic system configuration and preferences</CardDescription>
+            <CardTitle>Bank Information</CardTitle>
+            <CardDescription>Basic information about your financial institution</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bank-name">Bank Name</Label>
-                <Input id="bank-name" defaultValue="CCMC Bank" />
+                <Label htmlFor="bank_name">Bank Name</Label>
+                <Input
+                  id="bank_name"
+                  value={settings.bank_name}
+                  onChange={(e) => handleInputChange('bank_name', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="admin-email">Administrator Email</Label>
-                <Input id="admin-email" type="email" defaultValue="admin@ccmcbank.com" />
+                <Label htmlFor="admin_email">Admin Email</Label>
+                <Input
+                  id="admin_email"
+                  type="email"
+                  value={settings.admin_email}
+                  onChange={(e) => handleInputChange('admin_email', e.target.value)}
+                />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="support-phone">Support Phone Number</Label>
-              <Input id="support-phone" defaultValue="(237) 653-225-597" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="bank-address">Bank Address</Label>
-              <Textarea id="bank-address" defaultValue="123 Financial District, Douala, Cameroon" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="support_phone">Support Phone</Label>
+                <Input
+                  id="support_phone"
+                  value={settings.support_phone}
+                  onChange={(e) => handleInputChange('support_phone', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_address">Bank Address</Label>
+                <Input
+                  id="bank_address"
+                  value={settings.bank_address}
+                  onChange={(e) => handleInputChange('bank_address', e.target.value)}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notification Settings
-            </CardTitle>
-            <CardDescription>Configure system notifications and alerts</CardDescription>
+            <CardTitle>Loan Configuration</CardTitle>
+            <CardDescription>Configure loan approval criteria and limits</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="loan-notifications">Loan Application Notifications</Label>
-                <p className="text-sm text-muted-foreground">Notify when new loan applications are submitted</p>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="min_credit_score">Minimum Credit Score</Label>
+                <Input
+                  id="min_credit_score"
+                  type="number"
+                  value={settings.min_credit_score}
+                  onChange={(e) => handleInputChange('min_credit_score', Number(e.target.value))}
+                />
               </div>
-              <Switch id="loan-notifications" defaultChecked />
+              <div className="space-y-2">
+                <Label htmlFor="max_loan_amount">Maximum Loan Amount (FCFA)</Label>
+                <Input
+                  id="max_loan_amount"
+                  type="number"
+                  value={settings.max_loan_amount}
+                  onChange={(e) => handleInputChange('max_loan_amount', Number(e.target.value))}
+                />
+              </div>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="customer-notifications">Customer Registration Notifications</Label>
-                <p className="text-sm text-muted-foreground">Notify when new customers register</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="default_interest_rate">Default Interest Rate (%)</Label>
+                <Input
+                  id="default_interest_rate"
+                  type="number"
+                  step="0.1"
+                  value={settings.default_interest_rate}
+                  onChange={(e) => handleInputChange('default_interest_rate', Number(e.target.value))}
+                />
               </div>
-              <Switch id="customer-notifications" defaultChecked />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="security-alerts">Security Alerts</Label>
-                <p className="text-sm text-muted-foreground">Immediate alerts for security events</p>
+              <div className="space-y-2">
+                <Label htmlFor="auto_approval_limit">Auto-Approval Limit (FCFA)</Label>
+                <Input
+                  id="auto_approval_limit"
+                  type="number"
+                  value={settings.auto_approval_limit}
+                  onChange={(e) => handleInputChange('auto_approval_limit', Number(e.target.value))}
+                />
               </div>
-              <Switch id="security-alerts" defaultChecked />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="daily-reports">Daily Reports</Label>
-                <p className="text-sm text-muted-foreground">Automated daily summary reports</p>
-              </div>
-              <Switch id="daily-reports" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Email Configuration
-            </CardTitle>
-            <CardDescription>Configure email server settings for system notifications</CardDescription>
+            <CardTitle>System Operations</CardTitle>
+            <CardDescription>Configure automated system operations</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="smtp-server">SMTP Server</Label>
-                <Input id="smtp-server" placeholder="smtp.example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="smtp-port">SMTP Port</Label>
-                <Input id="smtp-port" placeholder="587" />
-              </div>
-            </div>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="smtp-username">Username</Label>
-                <Input id="smtp-username" placeholder="your-email@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="smtp-password">Password</Label>
-                <Input id="smtp-password" type="password" placeholder="••••••••" />
-              </div>
-            </div>
-            
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="smtp-ssl">Use SSL/TLS</Label>
-                <p className="text-sm text-muted-foreground">Enable secure email transmission</p>
+                <div className="text-sm font-medium">Automatic Database Backup</div>
+                <div className="text-sm text-muted-foreground">
+                  Enable daily automatic database backups
+                </div>
               </div>
-              <Switch id="smtp-ssl" defaultChecked />
+              <Switch
+                checked={settings.auto_backup}
+                onCheckedChange={(value) => handleInputChange('auto_backup', value)}
+              />
             </div>
+
+            {settings.auto_backup && (
+              <div className="space-y-2">
+                <Label htmlFor="backup_time">Backup Time (24-hour format)</Label>
+                <Input
+                  id="backup_time"
+                  type="time"
+                  value={settings.backup_time}
+                  onChange={(e) => handleInputChange('backup_time', e.target.value)}
+                  className="w-32"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Business Rules
-            </CardTitle>
-            <CardDescription>Configure lending and operational parameters</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="min-credit-score">Minimum Credit Score</Label>
-                <Input id="min-credit-score" type="number" defaultValue="600" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="max-loan-amount">Maximum Loan Amount (FCFA)</Label>
-                <Input id="max-loan-amount" type="number" defaultValue="200000000" />
-              </div>
-            </div>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="interest-rate">Default Interest Rate (%)</Label>
-                <Input id="interest-rate" type="number" step="0.1" defaultValue="5.0" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="auto-approval-limit">Auto-Approval Limit (FCFA)</Label>
-                <Input id="auto-approval-limit" type="number" defaultValue="1000000" />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="approval-workflow">Approval Workflow</Label>
-              <Select defaultValue="manual">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select approval workflow" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manual Review Only</SelectItem>
-                  <SelectItem value="auto-small">Auto-approve small loans</SelectItem>
-                  <SelectItem value="hybrid">Hybrid (Auto + Manual)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>System Maintenance</CardTitle>
-            <CardDescription>System maintenance and backup configuration</CardDescription>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Configure system notification preferences</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="auto-backup">Automatic Backups</Label>
-                <p className="text-sm text-muted-foreground">Schedule daily database backups</p>
+                <div className="text-sm font-medium">Loan Application Notifications</div>
+                <div className="text-sm text-muted-foreground">
+                  Get notified about new loan applications
+                </div>
               </div>
-              <Switch id="auto-backup" defaultChecked />
+              <Switch
+                checked={settings.loan_notifications}
+                onCheckedChange={(value) => handleInputChange('loan_notifications', value)}
+              />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="backup-time">Backup Time</Label>
-              <Select defaultValue="02:00">
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select backup time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="01:00">1:00 AM</SelectItem>
-                  <SelectItem value="02:00">2:00 AM</SelectItem>
-                  <SelectItem value="03:00">3:00 AM</SelectItem>
-                  <SelectItem value="04:00">4:00 AM</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Customer Registration Notifications</div>
+                <div className="text-sm text-muted-foreground">
+                  Get notified about new customer registrations
+                </div>
+              </div>
+              <Switch
+                checked={settings.customer_notifications}
+                onCheckedChange={(value) => handleInputChange('customer_notifications', value)}
+              />
             </div>
-            
-            <Separator />
-            
-            <div className="flex gap-2">
-              <Button variant="outline">Run Manual Backup</Button>
-              <Button variant="outline">Test Email Configuration</Button>
-              <Button variant="outline">Clear System Cache</Button>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Security Alerts</div>
+                <div className="text-sm text-muted-foreground">
+                  Receive immediate security alerts and warnings
+                </div>
+              </div>
+              <Switch
+                checked={settings.security_alerts}
+                onCheckedChange={(value) => handleInputChange('security_alerts', value)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Daily Summary Reports</div>
+                <div className="text-sm text-muted-foreground">
+                  Receive daily email summaries of system activity
+                </div>
+              </div>
+              <Switch
+                checked={settings.daily_reports}
+                onCheckedChange={(value) => handleInputChange('daily_reports', value)}
+              />
             </div>
           </CardContent>
         </Card>

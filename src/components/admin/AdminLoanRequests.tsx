@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +35,9 @@ const AdminLoanRequests = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [loans, setLoans] = useState<LoanRequest[]>([]);
+  const [filteredLoans, setFilteredLoans] = useState<LoanRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("pending");
 
   const fetchLoans = async () => {
     try {
@@ -56,18 +59,61 @@ const AdminLoanRequests = () => {
         return;
       }
 
-      // Ensure data has the correct structure
       const loansData = (data || []).map(loan => ({
         ...loan,
         customer: loan.customer || null
       }));
 
       setLoans(loansData);
+      filterLoans(loansData, activeFilter);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterLoans = (allLoans: LoanRequest[], status: string) => {
+    const filtered = allLoans.filter(loan => loan.status === status);
+    setFilteredLoans(filtered);
+  };
+
+  const handleFilterChange = (status: string) => {
+    setActiveFilter(status);
+    filterLoans(loans, status);
+  };
+
+  const exportData = () => {
+    const csvData = filteredLoans.map(loan => ({
+      'Loan ID': loan.id,
+      'Customer Name': `${loan.customer?.first_name || ''} ${loan.customer?.last_name || ''}`,
+      'Loan Type': loan.loan_type,
+      'Amount (FCFA)': loan.amount,
+      'Term (Months)': loan.term_months,
+      'Credit Score': loan.credit_score || 'N/A',
+      'Purpose': loan.purpose || 'N/A',
+      'Status': loan.status,
+      'Application Date': new Date(loan.created_at).toLocaleDateString()
+    }));
+
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `loan-requests-${activeFilter}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Successful",
+      description: `${filteredLoans.length} loan requests exported`,
+    });
   };
 
   useEffect(() => {
@@ -90,9 +136,12 @@ const AdminLoanRequests = () => {
         throw error;
       }
 
-      setLoans(loans.map(loan => 
+      // Update local state
+      const updatedLoans = loans.map(loan => 
         loan.id === loanId ? { ...loan, status: 'approved' } : loan
-      ));
+      );
+      setLoans(updatedLoans);
+      filterLoans(updatedLoans, activeFilter);
       
       toast({
         title: "Loan Approved",
@@ -124,9 +173,12 @@ const AdminLoanRequests = () => {
         throw error;
       }
 
-      setLoans(loans.map(loan => 
+      // Update local state
+      const updatedLoans = loans.map(loan => 
         loan.id === loanId ? { ...loan, status: 'rejected' } : loan
-      ));
+      );
+      setLoans(updatedLoans);
+      filterLoans(updatedLoans, activeFilter);
       
       toast({
         title: "Loan Rejected",
@@ -160,14 +212,28 @@ const AdminLoanRequests = () => {
   
   return (
     <div className="space-y-4">
-      {loans.length === 0 ? (
+      <div className="flex justify-between items-center">
+        <Tabs value={activeFilter} onValueChange={handleFilterChange}>
+          <TabsList>
+            <TabsTrigger value="pending">Pending ({loans.filter(l => l.status === 'pending').length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved ({loans.filter(l => l.status === 'approved').length})</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected ({loans.filter(l => l.status === 'rejected').length})</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <Button onClick={exportData} disabled={filteredLoans.length === 0}>
+          Export Data ({filteredLoans.length})
+        </Button>
+      </div>
+
+      {filteredLoans.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">No loan requests found.</p>
+            <p className="text-muted-foreground">No {activeFilter} loan requests found.</p>
           </CardContent>
         </Card>
       ) : (
-        loans.map((loan) => (
+        filteredLoans.map((loan) => (
           <Card key={loan.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
