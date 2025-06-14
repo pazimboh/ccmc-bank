@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,7 @@ const AdminLoanRequests = () => {
         .from('loans')
         .select(`
           *,
-          customer:customer_id(first_name, last_name, id)
+          customer:profiles!customer_id(first_name, last_name, id)
         `)
         .order('created_at', { ascending: false });
 
