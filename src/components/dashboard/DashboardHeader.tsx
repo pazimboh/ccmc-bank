@@ -52,17 +52,15 @@ const DashboardHeader = () => {
                 <div className="py-4">
                   <h2 className="text-lg font-semibold mb-4">CCMC Bank</h2>
                   <nav className="space-y-2">
-                    <Link to="/dashboard" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                    <Link to="/dashboard?tab=overview" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Dashboard
                     </Link>
-                    <Link to="/accounts" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                    <Link to="/dashboard?tab=accounts" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Accounts
                     </Link>
-                    <Link to="/transfers" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
-                      Transfers
-                    </Link>
-                    <Link to="/payments" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
-                      Payments
+                    {/* Removed "Transfers" link that pointed to a non-existent dashboard tab */}
+                    <Link to="/transfer" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                      Transfer
                     </Link>
                     <Link to="/loans" className="block px-4 py-2 rounded-lg hover:bg-gray-100">
                       Loans

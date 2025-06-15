@@ -232,12 +232,14 @@ const Dashboard = () => {
                       <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
-                      <Button variant="outline" size="sm" className="justify-start">
+                      <Button variant="outline" size="sm" className="justify-start" disabled title="Feature coming soon">
                         <Plus className="mr-2 h-4 w-4" /> Add Account
                       </Button>
-                      <Button variant="outline" size="sm" className="justify-start">
-                        <ArrowUpRight className="mr-2 h-4 w-4" /> Make Transfer
-                      </Button>
+                      <Link to="/transfer">
+                        <Button variant="outline" size="sm" className="justify-start w-full"> {/* Ensure button takes full width of link if needed */}
+                          <ArrowUpRight className="mr-2 h-4 w-4" /> Make Transfer
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>
