@@ -19,6 +19,7 @@ import Loans from "./pages/Loans";
 import Statements from "./pages/Statements";
 import Settings from "./pages/Settings";
 import Profiles from "./pages/Profiles";
+import Register from "./pages/Register"; // Import Register component
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<GuestRoute><Index /></GuestRoute>} />
             <Route path="/auth" element={<GuestRoute><Auth /></GuestRoute>} />
+            <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} /> {/* Added register route */}
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/apply-loan" element={<ProtectedRoute><ApplyLoan /></ProtectedRoute>} />

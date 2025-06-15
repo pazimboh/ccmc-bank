@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react"; // Added useEffect
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client"; // Added supabase
 
 const Register = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,38 +22,85 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    document.title = "Register - CCMC Bank";
+  }, []);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive",
-      });
+    // Client-side validation
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !accountType) {
+      toast({ title: "Validation Error", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
-    
+    if (password !== confirmPassword) {
+      toast({ title: "Error", description: "Passwords do not match. Please try again.", variant: "destructive" });
+      return;
+    }
     if (!agreeTerms) {
-      toast({
-        title: "Error",
-        description: "You must agree to the terms and conditions to register.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "You must agree to the terms and conditions to register.", variant: "destructive" });
       return;
     }
     
     setIsLoading(true);
-    
-    // This is just a placeholder for the actual registration logic
-    // that will be implemented later with Supabase
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Coming soon",
-        description: "Registration will be implemented once connected to Supabase backend.",
+    try {
+      // const redirectUrl = `${window.location.origin}/`; // For email confirmation, if enabled
+
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: { // This data is passed to raw_user_meta_data for the trigger to pick up
+            first_name: firstName,
+            last_name: lastName,
+            account_type: accountType,
+            // Phone and address are typically not part of Supabase Auth signUp options.data directly for profiles table.
+            // They are usually updated post-registration in a user profile section.
+            // The trigger on auth.users insert will create a public.profiles record.
+          }
+        }
       });
-    }, 1500);
+
+      if (error) throw error;
+
+      // Check if user object exists and if a session is created
+      // data.session is null if email confirmation is required
+      if (data.user && !data.session) {
+        toast({
+          title: "Registration Successful",
+          description: "Please check your email to confirm your registration.",
+          duration: 5000,
+        });
+        // Optionally, clear form or redirect to a "check email" page
+        // For now, user stays on page, form can be cleared if desired
+      } else if (data.user && data.session) {
+        // This case happens if email confirmation is disabled or user is auto-confirmed
+        toast({
+          title: "Registration Successful!",
+          description: "Your account has been created and you are now logged in. Please wait for approval.",
+        });
+        navigate('/pending-approval'); // New users go to pending approval
+      } else {
+        // Fallback, should ideally not happen if user and session are primary indicators
+        toast({
+          title: "Registration Submitted",
+          description: "Your application is being processed. You might need to confirm your email.",
+        });
+      }
+      // Reset form fields
+      setFirstName(""); setLastName(""); setEmail(""); setPassword("");
+      setConfirmPassword(""); setAccountType(""); setAgreeTerms(false);
+
+    } catch (error: any) {
+      toast({
+        title: "Registration Error",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
