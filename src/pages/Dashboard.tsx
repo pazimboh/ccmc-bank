@@ -1,13 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import AccountSummary from "@/components/dashboard/AccountSummary";
-<<<<<<< HEAD
-import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus, AlertCircle } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom"; // Imported useSearchParams
-import { useAuth } from "@/contexts/AuthContext";
-=======
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import DepositRequest from "@/components/dashboard/DepositRequest";
 import TwoFactorNotification from "@/components/auth/TwoFactorNotification";
@@ -20,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
@@ -35,6 +30,15 @@ interface DashboardTransactionItem {
   icon: any;
   color: string;
   status: string;
+  account_id: string | null;
+  created_at: string;
+  currency: string;
+  customer_id: string | null;
+  from_account: string | null;
+  reference_number: string | null;
+  to_account: string | null;
+  transaction_id: string;
+  transaction_type: string;
 }
 
 interface AccountWithDetails extends Tables<"accounts"> {
@@ -70,25 +74,6 @@ const Dashboard = () => {
     }
   }, [profile?.id]);
 
-<<<<<<< HEAD
-  // Effect to sync activeTab with URL query parameter 'tab'
-  const [searchParams] = useSearchParams();
-  useEffect(() => {
-    const tabFromQuery = searchParams.get("tab");
-    if (tabFromQuery === "accounts") {
-      setActiveTab("accounts");
-    } else { // Default to overview if tab is not 'accounts' or not present
-      setActiveTab("overview");
-    }
-  }, [searchParams]); // Removed setActiveTab from deps as it's a stable setter
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user || !profile?.id) {
-        setIsLoading(false);
-        return;
-      }
-=======
   const fetchAccountsAndTransactions = async () => {
     try {
       // Fetch accounts
@@ -97,7 +82,6 @@ const Dashboard = () => {
         .select('*')
         .eq('user_id', profile?.id)
         .order('created_at', { ascending: false });
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
 
       if (accountsError) throw accountsError;
       setAccounts(accountsData || []);
@@ -123,7 +107,16 @@ const Dashboard = () => {
               transaction.transaction_type === 'withdrawal' ? CreditCard : Building2,
         color: transaction.transaction_type === 'deposit' ? 'text-green-600' : 
                transaction.transaction_type === 'withdrawal' ? 'text-red-600' : 'text-blue-600',
-        status: transaction.status
+        status: transaction.status,
+        account_id: transaction.account_id,
+        created_at: transaction.created_at,
+        currency: transaction.currency || 'FCFA',
+        customer_id: transaction.customer_id,
+        from_account: transaction.from_account,
+        reference_number: transaction.reference_number,
+        to_account: transaction.to_account,
+        transaction_id: transaction.transaction_id,
+        transaction_type: transaction.transaction_type
       })) || [];
 
       setTransactions(transformedTransactions);
@@ -272,87 +265,10 @@ const Dashboard = () => {
 
         <main className="flex-1 p-6">
           <div className="container mx-auto">
-<<<<<<< HEAD
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2"> {/* Changed grid-cols-3 to grid-cols-2 */}
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="accounts">Accounts</TabsTrigger>
-                {/* Removed Transfers tab trigger */}
-              </TabsList>
-              
-              <TabsContent value="overview" className="space-y-6">
-                <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}</h1>
-                <p className="text-muted-foreground">Here's an overview of your finances</p>
-                
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Balance
-                      </CardTitle>
-                      {/* <DollarSign className="h-4 w-4 text-muted-foreground" /> */}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{kpis.totalBalance.toLocaleString()} FCFA</div>
-                      <p className="text-xs text-muted-foreground">
-                        {/* TODO: Fetch last month's change data - placeholder retained */}
-                        +{(892.00).toLocaleString()} FCFA from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Monthly Spending
-                      </CardTitle>
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{kpis.monthlySpending.toLocaleString()} FCFA</div>
-                      {/* TODO: Budget related text needs data source */}
-                      <p className="text-xs text-muted-foreground">
-                        Track your monthly budget
-                      </p>
-                      {/* <Progress value={68} className="mt-2 h-1" /> */}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    {/* Savings Goal Card - Omitted for now as data source is unclear */}
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Savings Goal
-                      </CardTitle>
-                      <PiggyBank className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">N/A</div>
-                      <p className="text-xs text-muted-foreground">
-                        Feature coming soon
-                      </p>
-                      {/* <Progress value={78} className="mt-2 h-1" /> */}
-                    </CardContent>
-                  </Card>
-                  <Card className="border-dashed border-2">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-2">
-                      <Button variant="outline" size="sm" className="justify-start" disabled title="Feature coming soon">
-                        <Plus className="mr-2 h-4 w-4" /> Add Account
-                      </Button>
-                      <Link to="/transfer">
-                        <Button variant="outline" size="sm" className="justify-start w-full"> {/* Ensure button takes full width of link if needed */}
-                          <ArrowUpRight className="mr-2 h-4 w-4" /> Make Transfer
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-=======
             {activeTab === "dashboard" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h1 className="text-3xl font-bold">Dashboard</h1>
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
                 </div>
                 
                 {/* Show account summaries */}
@@ -422,38 +338,6 @@ const Dashboard = () => {
                                 </div>
                               </div>
                             </div>
-<<<<<<< HEAD
-                            <div className="space-x-2">
-                              <Button size="sm">Transfer</Button>
-                              <Button size="sm" variant="outline">Statements</Button>
-                            </div>
-                          </div>
-                          <Separator className="my-4" />
-                          <h4 className="font-semibold mb-2">Recent Activity</h4>
-                          <RecentTransactions
-                            transactions={transactionsData.filter(t => t.from_account === account.account_number || t.to_account === account.account_number)}
-                            limit={3}
-                          />
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                     <p>No accounts found.</p>
-                  )}
-                  
-                  <Card className="border-dashed border-2">
-                    <CardContent className="flex items-center justify-center p-6">
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Open New Account
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-              
-              {/* Removed TabsContent for value="transfers" */}
-            </Tabs>
-=======
                           ))}
                         </div>
                       </div>
@@ -462,25 +346,12 @@ const Dashboard = () => {
                 </Card>
 
                 <RecentTransactions 
-                  transactions={transactions.map(t => ({
-                    ...t,
-                    // Map to match RecentTransactions expected interface
-                    account_id: null,
-                    created_at: t.date,
-                    currency: 'FCFA',
-                    customer_id: null,
-                    from_account: null,
-                    reference_number: null,
-                    to_account: null,
-                    transaction_id: t.id,
-                    transaction_type: t.type
-                  }))}
+                  transactions={transactions}
                 />
               </div>
             )}
 
             {activeTab === "deposit" && <DepositRequest />}
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
           </div>
         </main>
       </div>

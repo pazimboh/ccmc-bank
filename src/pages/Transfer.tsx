@@ -16,16 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Send, ArrowUpRight, ArrowDownLeft, Building2 } from "lucide-react";
 
-<<<<<<< HEAD:src/pages/Transfer.tsx
-const Transfer = () => { // Renamed component
-  const [activeTab, setActiveTab] = useState("transfer"); // Updated activeTab
-  const { profile, user, isLoading: authLoading, refreshUserData } = useAuth();
-  const { toast } = useToast();
-
-=======
-const Payments = () => {
-  const [activeTab, setActiveTab] = useState("payments");
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d:src/pages/Payments.tsx
+const Transfer = () => {
+  const [activeTab, setActiveTab] = useState("transfer");
   const [accounts, setAccounts] = useState<Tables<"accounts">[]>([]);
   const [transfers, setTransfers] = useState<Tables<"transfers">[]>([]);
   const [transferData, setTransferData] = useState({
@@ -42,20 +34,9 @@ const Payments = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-<<<<<<< HEAD:src/pages/Transfer.tsx
-    document.title = "Transfer - CCMC Bank"; // Updated document title
-  }, []);
-
-  useEffect(() => {
-    if (!authLoading && user && profile?.id) {
-      fetchPageData();
-    } else if (!authLoading) {
-      setIsLoading(false); // Auth not loading, but no user/profile
-=======
-    document.title = "Payments - CCMC Bank";
+    document.title = "Transfer - CCMC Bank";
     if (profile?.id) {
       fetchAccountsAndTransfers();
->>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d:src/pages/Payments.tsx
     }
   }, [profile?.id]);
 
@@ -421,4 +402,4 @@ const Payments = () => {
   );
 };
 
-export default Transfer; // Updated export
+export default Transfer;
