@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,7 @@ const AdminDepositValidation = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDeposits(data || []);
+      setDeposits(data as DepositWithDetails[] || []);
     } catch (error) {
       console.error('Error fetching deposits:', error);
       toast({
@@ -76,19 +75,27 @@ const AdminDepositValidation = () => {
 
       if (error) throw error;
 
-      // If approved, update account balance
+      // If approved, update account balance manually
       if (action === 'approved') {
         const deposit = deposits.find(d => d.id === depositId);
         if (deposit) {
-          const { error: balanceError } = await supabase.rpc('update_account_balance', {
-            account_id: deposit.account_id,
-            amount: deposit.amount
-          });
+          // Get current account balance
+          const { data: accountData, error: accountError } = await supabase
+            .from('accounts')
+            .select('balance')
+            .eq('id', deposit.account_id)
+            .single();
 
-          if (balanceError) {
-            console.error('Error updating balance:', balanceError);
-            // Continue anyway, the deposit status was updated
-          }
+          if (accountError) throw accountError;
+
+          // Update balance
+          const newBalance = Number(accountData.balance) + Number(deposit.amount);
+          const { error: updateError } = await supabase
+            .from('accounts')
+            .update({ balance: newBalance })
+            .eq('id', deposit.account_id);
+
+          if (updateError) throw updateError;
         }
       }
 
