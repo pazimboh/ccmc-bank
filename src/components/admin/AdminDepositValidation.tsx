@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,11 @@ import { Tables } from "@/integrations/supabase/types";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface DepositWithDetails extends Tables<"deposits"> {
-  profiles: {
+  profiles?: {
     first_name: string;
     last_name: string;
   } | null;
-  accounts: {
+  accounts?: {
     account_name: string;
     account_number: string;
   } | null;
@@ -40,7 +41,15 @@ const AdminDepositValidation = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDeposits((data || []) as DepositWithDetails[]);
+      
+      // Handle the data properly by ensuring it matches our interface
+      const processedData = (data || []).map(deposit => ({
+        ...deposit,
+        profiles: Array.isArray(deposit.profiles) ? deposit.profiles[0] : deposit.profiles,
+        accounts: Array.isArray(deposit.accounts) ? deposit.accounts[0] : deposit.accounts
+      }));
+      
+      setDeposits(processedData);
     } catch (error) {
       console.error('Error fetching deposits:', error);
       toast({
