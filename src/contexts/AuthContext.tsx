@@ -159,6 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!authResolved) {
              setAuthResolved(true);
         }
+        console.log('[AuthContext] onAuthStateChange processed event. Current authResolved:', authResolved, 'Newly set authResolved:', !isLoading, 'Event:', event);
       }
     );
 
@@ -179,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       // Mark auth as resolved after initial check and potential data fetch
       setAuthResolved(true);
+      console.log('[AuthContext] initializeAuth completed, setAuthResolved: true');
     };
 
     initializeAuth();
@@ -186,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
+  console.log('[AuthContext] Provider Render. authResolved:', authResolved, 'Derived isLoading:', isLoading, 'User ID:', user?.id);
   return (
     <AuthContext.Provider
       value={{

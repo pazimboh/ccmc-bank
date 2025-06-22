@@ -10,15 +10,8 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const { user, isLoading, isApproved, isAdmin, profile } = useAuth(); // profile is implicitly part of isLoading's correctness for isApproved
 
-  // Log current state for debugging, can be removed in production
-  console.log('ProtectedRoute check:', {
-    user: user?.email,
-    isLoading,
-    profileStatus: profile?.status, // More direct check for what isApproved depends on
-    isApproved,
-    isAdmin,
-    requireAdmin
-  });
+  // New diagnostic log
+  console.log('[ProtectedRoute] Rendering. isLoading from useAuth():', isLoading, 'User ID:', user?.id, 'isApproved:', isApproved, 'isAdmin:', isAdmin, 'requireAdmin:', requireAdmin, 'Current window.location.pathname:', window.location.pathname);
 
   if (isLoading) {
     return (

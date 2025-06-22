@@ -62,6 +62,8 @@ const Dashboard = () => {
   }, [searchParams]); // Removed setActiveTab from deps as it's a stable setter
 
   useEffect(() => {
+    const controller = new AbortController(); // Create AbortController
+
     const fetchData = async () => {
       if (!user || !profile?.id) {
         setIsLoading(false);
@@ -75,22 +77,34 @@ const Dashboard = () => {
         // Fetch accounts
         const { data: fetchedAccounts, error: accountsError } = await supabase
           .from("accounts")
-          .select("*")
-          .eq("user_id", profile.id); // Changed "customer_id" to "user_id"
+          .select("*", { signal: controller.signal }) // Pass signal
+          .eq("user_id", profile.id);
 
-        if (accountsError) throw accountsError;
+        if (accountsError) {
+          if (accountsError.name === 'AbortError') {
+            console.log('Accounts fetch aborted');
+            return; // Do not proceed further if aborted
+          }
+          throw accountsError;
+        }
         setAccountsData(fetchedAccounts || []);
         const totalBalanceFromFetched = (fetchedAccounts || []).reduce((sum, acc) => sum + Number(acc.balance), 0);
 
         // Fetch transactions
         const { data: transactions, error: transactionsError } = await supabase
           .from("transactions")
-          .select("*")
+          .select("*", { signal: controller.signal }) // Pass signal
           .eq("customer_id", profile.id)
           .order("created_at", { ascending: false })
           .limit(10);
 
-        if (transactionsError) throw transactionsError;
+        if (transactionsError) {
+          if (transactionsError.name === 'AbortError') {
+            console.log('Transactions fetch aborted');
+            return; // Do not proceed further if aborted
+          }
+          throw transactionsError;
+        }
         setTransactionsData(transactions || []);
 
         // Calculate Monthly Spending
@@ -106,23 +120,28 @@ const Dashboard = () => {
           monthlySpending: monthlySpending,
         });
 
-      } catch (err) {
-        console.error("Error fetching dashboard data (friendly message):", err instanceof Error ? err.message : String(err));
-        console.error("Raw error object fetching dashboard data:", err); // Detailed log
-        // Attempt to stringify if it's a complex object, otherwise direct log is fine.
-        // try {
-        //   console.error("Raw error object (stringified):", JSON.stringify(err, null, 2));
-        // } catch (e) {
-        //   console.error("Could not stringify error object:", e);
-        // }
-        setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
+      } catch (err: any) { // Ensure 'err' is typed to allow checking 'name' property
+        if (err.name === 'AbortError') {
+          console.log('Fetch aborted in catch block for dashboard data.');
+        } else {
+          console.error("Error fetching dashboard data (friendly message):", err instanceof Error ? err.message : String(err));
+          console.error("Raw error object fetching dashboard data:", err);
+          setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
+        }
       } finally {
+        // Only set isLoading to false if the fetch wasn't aborted,
+        // or handle aborted state appropriately if needed (e.g. not showing an error for aborts)
+        // For now, we'll set it to false regardless, as an aborted fetch means loading is done.
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [user, profile?.id]); // Rerun if user or profile.id changes
+
+    return () => {
+      controller.abort(); // Cleanup: abort ongoing requests
+    };
+  }, [user?.id, profile?.id]);
 
   // No longer need to map to TransactionDisplayItem here,
   // RecentTransactions component will handle it with raw transaction data.
