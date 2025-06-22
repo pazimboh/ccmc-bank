@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
@@ -17,6 +18,15 @@ interface CustomerSettingsData {
   allow_phone_contact_for_support: boolean;
   allow_phone_contact_for_offers: boolean;
 }
+=======
+
+import { useState, useEffect } from "react";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardNav from "@/components/dashboard/DashboardNav";
+import TwoFactorSetup from "@/components/auth/TwoFactorSetup";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+>>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
@@ -125,6 +135,7 @@ const Settings = () => {
       <div className="flex">
         <DashboardNav activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="flex-1 p-6">
+<<<<<<< HEAD
           <div className="container mx-auto space-y-8">
             <div className="flex items-center justify-between">
               <div>
@@ -208,6 +219,34 @@ const Settings = () => {
                 </Button>
             </div>
 
+=======
+          <div className="container mx-auto">
+            <h1 className="text-3xl font-bold mb-6">Settings</h1>
+            
+            <Tabs defaultValue="security" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="security">Security</TabsTrigger>
+                <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="security" className="space-y-6">
+                <TwoFactorSetup />
+              </TabsContent>
+              
+              <TabsContent value="preferences" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account Preferences</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Additional preferences will be available here. This section is under development.
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+>>>>>>> 13ce39cf6e5937ccecb11ac700a85fb78b0b4f5d
           </div>
         </main>
       </div>
