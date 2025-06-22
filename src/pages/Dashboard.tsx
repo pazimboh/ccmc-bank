@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import RecentTransactions, { TransactionDisplayItem } from "@/components/dashboard/RecentTransactions";
 import AccountSummary from "@/components/dashboard/AccountSummary";
-import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus, AlertCircle } from "lucide-react";
+import TwoFactorNotification from "@/components/auth/TwoFactorNotification";
+import DepositRequest from "@/components/dashboard/DepositRequest";
+import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus, AlertCircle, Snowflake } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,8 +23,7 @@ interface Account extends Tables<"accounts"> { // Inherit from Supabase type
   // but they seem to align if we map account_number to accountNumber.
   // For Dashboard.tsx usage, we can directly use Supabase Row type if mapping is handled at component prop level,
   // or ensure this interface matches what AccountSummary expects.
-  // Let's ensure AccountSummary uses 'account_number' or we map it.
-  // For now, assume AccountSummary can be adapted or direct field names match after mapping.
+  // Let's ensure AccountSummary can be adapted or direct field names match after mapping.
   accountNumber: string; // This is 'account_number' in Supabase
 }
 
@@ -157,6 +159,8 @@ const Dashboard = () => {
         
         <main className="flex-1 p-6">
           <div className="container mx-auto">
+            <TwoFactorNotification />
+            
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -168,7 +172,7 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}</h1>
                 <p className="text-muted-foreground">Here's an overview of your finances</p>
                 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-6 md:grid-cols-2">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">
@@ -235,33 +239,50 @@ const Dashboard = () => {
                   <Card className="col-span-1">
                     <CardHeader>
                       <CardTitle>Your Accounts</CardTitle>
+                      <CardDescription>Your validated bank accounts</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {isLoading && accountsData.length === 0 ? (
                         <p>Loading accounts...</p>
                       ) : accountsData.length > 0 ? (
-                        accountsData.map((account) => (
-                          // Map Supabase account fields to AccountSummaryProps
-                          <AccountSummary
-                            key={account.id}
-                            account={{
-                              id: account.id,
-                              name: account.name,
-                              type: account.type,
-                              balance: Number(account.balance),
-                              accountNumber: account.account_number
-                            }}
-                          />
-                        ))
+                        <div className="space-y-4">
+                          {accountsData.map((account) => (
+                            <div key={account.id} className="border rounded-lg p-4">
+                              <div className="flex justify-between items-center mb-2">
+                                <h4 className="font-medium">{account.account_name}</h4>
+                                <Badge 
+                                  variant={account.status === 'active' ? 'default' : 
+                                          account.status === 'frozen' ? 'secondary' : 'outline'}
+                                  className={account.status === 'frozen' ? 'bg-blue-100 text-blue-800' : ''}
+                                >
+                                  {account.status === 'frozen' && <Snowflake className="w-3 h-3 mr-1" />}
+                                  {account.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Account: {account.account_number}
+                              </p>
+                              <p className="text-lg font-bold">
+                                {Number(account.balance).toLocaleString()} FCFA
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Type: {account.account_type}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       ) : (
-                        <p>No accounts found.</p>
+                        <div className="text-center py-6">
+                          <p className="text-muted-foreground mb-4">No accounts found.</p>
+                          <p className="text-sm text-muted-foreground">
+                            Contact support to open your first account.
+                          </p>
+                        </div>
                       )}
                       <div className="pt-4">
-                        <Link to="/accounts">
-                          <Button variant="outline" className="w-full">
-                            View All Accounts
-                          </Button>
-                        </Link>
+                        <Button variant="outline" className="w-full" onClick={() => setActiveTab("accounts")}>
+                          View All Accounts
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -283,52 +304,77 @@ const Dashboard = () => {
               
               <TabsContent value="accounts" className="space-y-6">
                 <h1 className="text-3xl font-bold">Your Accounts</h1>
-                <p className="text-muted-foreground">Manage all your accounts in one place</p>
+                <p className="text-muted-foreground">Manage all your accounts and make deposits</p>
                 
-                <div className="grid gap-6">
-                  {isLoading && accountsData.length === 0 ? (
-                     <p>Loading accounts...</p>
-                  ) : accountsData.length > 0 ? (
-                    accountsData.map((account) => (
-                      <Card key={account.id}>
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <CardTitle>{account.name}</CardTitle>
-                            <Button variant="outline" size="sm">Manage</Button>
-                          </div>
-                          <CardDescription>Account Number: {account.account_number}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Available Balance</p>
-                              <p className="text-3xl font-bold">{Number(account.balance).toLocaleString()} FCFA</p>
+                <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="lg:col-span-2 space-y-6">
+                    {isLoading && accountsData.length === 0 ? (
+                       <p>Loading accounts...</p>
+                    ) : accountsData.length > 0 ? (
+                      accountsData.map((account) => (
+                        <Card key={account.id}>
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle>{account.account_name}</CardTitle>
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant={account.status === 'active' ? 'default' : 
+                                          account.status === 'frozen' ? 'secondary' : 'outline'}
+                                  className={account.status === 'frozen' ? 'bg-blue-100 text-blue-800' : ''}
+                                >
+                                  {account.status === 'frozen' && <Snowflake className="w-3 h-3 mr-1" />}
+                                  {account.status}
+                                </Badge>
+                                <Button variant="outline" size="sm">Manage</Button>
+                              </div>
                             </div>
-                            <div className="space-x-2">
-                              <Button size="sm">Transfer</Button>
-                              <Button size="sm" variant="outline">Statements</Button>
+                            <CardDescription>Account Number: {account.account_number}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Available Balance</p>
+                                <p className="text-3xl font-bold">{Number(account.balance).toLocaleString()} FCFA</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Type: {account.account_type} | Currency: {account.currency}
+                                </p>
+                                {account.status === 'frozen' && (
+                                  <p className="text-sm text-blue-600 mt-2 flex items-center">
+                                    <Snowflake className="w-3 h-3 mr-1" />
+                                    Account frozen - can only receive funds
+                                  </p>
+                                )}
+                              </div>
+                              <div className="space-x-2">
+                                <Button size="sm" disabled={account.status === 'frozen'}>Transfer</Button>
+                                <Button size="sm" variant="outline">Statements</Button>
+                              </div>
                             </div>
-                          </div>
-                          <Separator className="my-4" />
-                          <h4 className="font-semibold mb-2">Recent Activity</h4>
-                          <RecentTransactions
-                            transactions={transactionsData.filter(t => t.from_account === account.account_number || t.to_account === account.account_number)}
-                            limit={3}
-                          />
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                     <p>No accounts found.</p>
-                  )}
+                            <Separator className="my-4" />
+                            <h4 className="font-semibold mb-2">Recent Activity</h4>
+                            <RecentTransactions
+                              transactions={transactionsData.filter(t => t.from_account === account.account_number || t.to_account === account.account_number)}
+                              limit={3}
+                            />
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                       <div className="text-center py-12">
+                         <p className="text-muted-foreground mb-4">No accounts found.</p>
+                         <p className="text-sm text-muted-foreground">
+                           You need to have your account approved by an administrator before you can see your banking accounts here.
+                         </p>
+                       </div>
+                    )}
+                  </div>
                   
-                  <Card className="border-dashed border-2">
-                    <CardContent className="flex items-center justify-center p-6">
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Open New Account
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <div className="lg:col-span-1">
+                    <DepositRequest onDepositSubmitted={() => {
+                      // Refresh data after deposit
+                      window.location.reload();
+                    }} />
+                  </div>
                 </div>
               </TabsContent>
               

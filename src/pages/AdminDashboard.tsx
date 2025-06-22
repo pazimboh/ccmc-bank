@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +16,7 @@ import AdminAuditLog from "@/components/admin/AdminAuditLog";
 import AdminSecurity from "@/components/admin/AdminSecurity";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AddCustomerModal from "@/components/admin/AddCustomerModal";
+import AdminDepositValidation from "@/components/admin/AdminDepositValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -253,17 +253,30 @@ const AdminDashboard = () => {
                 <h1 className="text-3xl font-bold">Transaction Monitoring</h1>
                 <p className="text-muted-foreground">Monitor and audit all financial transactions</p>
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transaction Audit Log</CardTitle>
-                    <CardDescription>
-                      Recent financial transactions across all accounts
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AdminTransactionLog />
-                  </CardContent>
-                </Card>
+                <Tabs defaultValue="deposits" className="space-y-4">
+                  <TabsList>
+                    <TabsTrigger value="deposits">Deposit Validation</TabsTrigger>
+                    <TabsTrigger value="transactions">Transaction Log</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="deposits">
+                    <AdminDepositValidation />
+                  </TabsContent>
+                  
+                  <TabsContent value="transactions">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Transaction Audit Log</CardTitle>
+                        <CardDescription>
+                          Recent financial transactions across all accounts
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <AdminTransactionLog />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               <TabsContent value="reports" className="space-y-6">
