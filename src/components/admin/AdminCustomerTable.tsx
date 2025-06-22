@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Snowflake } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -19,10 +18,6 @@ interface Customer {
   created_at: string | null;
   user_roles: {
     role: string;
-  }[];
-  accounts: {
-    id: string;
-    status: string;
   }[];
 }
 
@@ -38,8 +33,7 @@ const AdminCustomerTable = () => {
         .from('profiles')
         .select(`
           *,
-          user_roles(role),
-          accounts(id, status)
+          user_roles(role)
         `)
         .order('created_at', { ascending: false });
 
@@ -53,10 +47,10 @@ const AdminCustomerTable = () => {
         return;
       }
 
+      // Ensure data has the correct structure
       const customersData = (data || []).map(customer => ({
         ...customer,
-        user_roles: customer.user_roles || [],
-        accounts: customer.accounts || []
+        user_roles: customer.user_roles || []
       }));
 
       setCustomers(customersData);
@@ -100,36 +94,6 @@ const AdminCustomerTable = () => {
     }
   };
 
-  const handleAccountFreeze = async (customerId: string, freeze: boolean) => {
-    try {
-      const newStatus = freeze ? 'frozen' : 'active';
-      
-      const { error } = await supabase
-        .from('accounts')
-        .update({ status: newStatus })
-        .eq('user_id', customerId);
-
-      if (error) throw error;
-
-      // Refresh customer data to show updated account status
-      await fetchCustomers();
-
-      toast({
-        title: freeze ? "Accounts Frozen" : "Accounts Unfrozen",
-        description: freeze ? 
-          "Customer accounts have been frozen - they can only receive funds" :
-          "Customer accounts have been unfrozen",
-      });
-    } catch (error) {
-      console.error('Error updating account status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update account status",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "approved":
@@ -148,14 +112,6 @@ const AdminCustomerTable = () => {
     return role === 'admin' ? 
       <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge> :
       <Badge variant="outline">Customer</Badge>;
-  };
-
-  const hasActiveAccounts = (accounts: { status: string }[]) => {
-    return accounts.some(acc => acc.status === 'active');
-  };
-
-  const hasFrozenAccounts = (accounts: { status: string }[]) => {
-    return accounts.some(acc => acc.status === 'frozen');
   };
 
   if (isLoading) {
@@ -177,7 +133,6 @@ const AdminCustomerTable = () => {
               <TableHead>Phone</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Account Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -199,91 +154,44 @@ const AdminCustomerTable = () => {
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
                 <TableCell>{getRoleBadge(customer.user_roles)}</TableCell>
                 <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                <TableCell>
-                  {customer.accounts.length > 0 ? (
-                    <div className="flex flex-col gap-1">
-                      {hasFrozenAccounts(customer.accounts) && (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 w-fit">
-                          <Snowflake className="w-3 h-3 mr-1" />
-                          Frozen
-                        </Badge>
-                      )}
-                      {hasActiveAccounts(customer.accounts) && (
-                        <Badge variant="outline" className="bg-green-100 text-green-800 w-fit">
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No accounts</span>
-                  )}
-                </TableCell>
                 <TableCell className="text-sm">
                   {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      {customer.status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleStatusUpdate(customer.id, 'approved')}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusUpdate(customer.id, 'rejected')}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      {customer.status === 'rejected' && (
+                  <div className="flex gap-2">
+                    {customer.status === 'pending' && (
+                      <>
                         <Button
                           size="sm"
                           onClick={() => handleStatusUpdate(customer.id, 'approved')}
                         >
                           Approve
                         </Button>
-                      )}
-                      {customer.status === 'approved' && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleStatusUpdate(customer.id, 'pending')}
+                          onClick={() => handleStatusUpdate(customer.id, 'rejected')}
                         >
-                          Reset
+                          Reject
                         </Button>
-                      )}
-                    </div>
-                    
-                    {customer.accounts.length > 0 && customer.status === 'approved' && (
-                      <div className="flex gap-2">
-                        {hasActiveAccounts(customer.accounts) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAccountFreeze(customer.id, true)}
-                            className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                          >
-                            <Snowflake className="w-3 h-3 mr-1" />
-                            Freeze
-                          </Button>
-                        )}
-                        {hasFrozenAccounts(customer.accounts) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAccountFreeze(customer.id, false)}
-                            className="text-green-600 border-green-300 hover:bg-green-50"
-                          >
-                            Unfreeze
-                          </Button>
-                        )}
-                      </div>
+                      </>
+                    )}
+                    {customer.status === 'rejected' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(customer.id, 'approved')}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {customer.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(customer.id, 'pending')}
+                      >
+                        Reset
+                      </Button>
                     )}
                   </div>
                 </TableCell>

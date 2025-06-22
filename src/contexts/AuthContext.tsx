@@ -44,8 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true); // Replaced by authResolved
+  const [authResolved, setAuthResolved] = useState(false); // New state
 
+  const isLoading = !authResolved; // isLoading is now derived
   const isApproved = profile?.status === 'approved';
   const isAdmin = userRole?.role === 'admin';
 
@@ -95,13 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(updatedProfile);
       setUserRole(roleData);
       
-      // IMPORTANT: Only set loading to false AFTER we've fetched and set the user data
-      setIsLoading(false);
+      // setIsLoading calls removed from fetchUserData
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Set loading to false even if there's an error
-      setIsLoading(false);
+      // setIsLoading calls removed from fetchUserData
     }
+    // No finally block needed here for setIsLoading
   };
 
   const refreshUserData = async () => {
@@ -132,29 +133,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           // Fetch user data directly without setTimeout
-          await fetchUserData(session.user.id); // Ensure fetchUserData sets isLoading appropriately
+          await fetchUserData(session.user.id);
         } else {
-          // Clear profile and role, set loading to false as there's no user data to fetch
+          // Clear profile and role as there's no user
           setProfile(null);
           setUserRole(null);
-          setIsLoading(false);
         }
+        // Crucially, mark auth as resolved after processing this event
+        setAuthResolved(true);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserData(session.user.id); // This will set isLoading to false when done
-      } else {
-        setIsLoading(false); // Only set loading to false when there's no user
+    const initializeAuth = async () => {
+      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Initial session check:', initialSession?.user?.email);
+
+      if (sessionError) {
+        console.error("Error getting initial session:", sessionError);
       }
-    });
+      
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      
+      if (initialSession?.user) {
+        await fetchUserData(initialSession.user.id);
+      }
+      // Mark auth as resolved after initial check and potential data fetch
+      setAuthResolved(true);
+    };
+
+    initializeAuth();
 
     return () => subscription.unsubscribe();
   }, []);

@@ -1,14 +1,11 @@
-
 import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
-import TwoFactorSetup from "@/components/auth/TwoFactorSetup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -128,105 +125,89 @@ const Settings = () => {
       <div className="flex">
         <DashboardNav activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="flex-1 p-6">
-          <div className="container mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Settings</h1>
-            
-            <Tabs defaultValue="security" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="security">Security</TabsTrigger>
-                <TabsTrigger value="preferences">Preferences</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="security" className="space-y-6">
-                <TwoFactorSetup />
-              </TabsContent>
-              
-              <TabsContent value="preferences" className="space-y-6">
-                <div className="space-y-8">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h1 className="text-3xl font-bold">Your Settings</h1>
-                      <p className="text-muted-foreground">
-                        Manage your notification and contact preferences.
-                      </p>
-                    </div>
-                    <Button onClick={handleSaveChanges} disabled={isSaving}>
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </Button>
+          <div className="container mx-auto space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Your Settings</h1>
+                <p className="text-muted-foreground">
+                  Manage your notification and contact preferences.
+                </p>
+              </div>
+              <Button onClick={handleSaveChanges} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+
+            <Separator />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Preferences</CardTitle>
+                <CardDescription>Choose how you receive notifications from us.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label htmlFor="email_transaction_alerts" className="font-medium">Email Transaction Alerts</Label>
+                    <p className="text-sm text-muted-foreground">Receive email alerts for all transactions on your account.</p>
                   </div>
-
-                  <Separator />
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Notification Preferences</CardTitle>
-                      <CardDescription>Choose how you receive notifications from us.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label htmlFor="email_transaction_alerts" className="font-medium">Email Transaction Alerts</Label>
-                          <p className="text-sm text-muted-foreground">Receive email alerts for all transactions on your account.</p>
-                        </div>
-                        <Switch
-                          id="email_transaction_alerts"
-                          checked={settings.email_transaction_alerts}
-                          onCheckedChange={(value) => handleSettingChange('email_transaction_alerts', value)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label htmlFor="email_promotional_offers" className="font-medium">Email Promotional Offers</Label>
-                          <p className="text-sm text-muted-foreground">Receive emails about new products, features, and special offers.</p>
-                        </div>
-                        <Switch
-                          id="email_promotional_offers"
-                          checked={settings.email_promotional_offers}
-                          onCheckedChange={(value) => handleSettingChange('email_promotional_offers', value)}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Contact Preferences</CardTitle>
-                      <CardDescription>Manage how we can contact you by phone.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label htmlFor="allow_phone_contact_for_support" className="font-medium">Allow Phone Contact for Support</Label>
-                          <p className="text-sm text-muted-foreground">Permit us to contact you by phone for account support issues.</p>
-                        </div>
-                        <Switch
-                          id="allow_phone_contact_for_support"
-                          checked={settings.allow_phone_contact_for_support}
-                          onCheckedChange={(value) => handleSettingChange('allow_phone_contact_for_support', value)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label htmlFor="allow_phone_contact_for_offers" className="font-medium">Allow Phone Contact for Offers</Label>
-                          <p className="text-sm text-muted-foreground">Permit us to contact you by phone regarding promotional offers.</p>
-                        </div>
-                        <Switch
-                          id="allow_phone_contact_for_offers"
-                          checked={settings.allow_phone_contact_for_offers}
-                          onCheckedChange={(value) => handleSettingChange('allow_phone_contact_for_offers', value)}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <div className="flex justify-end mt-6">
-                      <Button onClick={handleSaveChanges} disabled={isSaving}>
-                          {isSaving ? "Saving..." : "Save Changes"}
-                      </Button>
-                  </div>
+                  <Switch
+                    id="email_transaction_alerts"
+                    checked={settings.email_transaction_alerts}
+                    onCheckedChange={(value) => handleSettingChange('email_transaction_alerts', value)}
+                  />
                 </div>
-              </TabsContent>
-            </Tabs>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label htmlFor="email_promotional_offers" className="font-medium">Email Promotional Offers</Label>
+                    <p className="text-sm text-muted-foreground">Receive emails about new products, features, and special offers.</p>
+                  </div>
+                  <Switch
+                    id="email_promotional_offers"
+                    checked={settings.email_promotional_offers}
+                    onCheckedChange={(value) => handleSettingChange('email_promotional_offers', value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Preferences</CardTitle>
+                <CardDescription>Manage how we can contact you by phone.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label htmlFor="allow_phone_contact_for_support" className="font-medium">Allow Phone Contact for Support</Label>
+                    <p className="text-sm text-muted-foreground">Permit us to contact you by phone for account support issues.</p>
+                  </div>
+                  <Switch
+                    id="allow_phone_contact_for_support"
+                    checked={settings.allow_phone_contact_for_support}
+                    onCheckedChange={(value) => handleSettingChange('allow_phone_contact_for_support', value)}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label htmlFor="allow_phone_contact_for_offers" className="font-medium">Allow Phone Contact for Offers</Label>
+                    <p className="text-sm text-muted-foreground">Permit us to contact you by phone regarding promotional offers.</p>
+                  </div>
+                  <Switch
+                    id="allow_phone_contact_for_offers"
+                    checked={settings.allow_phone_contact_for_offers}
+                    onCheckedChange={(value) => handleSettingChange('allow_phone_contact_for_offers', value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end mt-6">
+                <Button onClick={handleSaveChanges} disabled={isSaving}>
+                    {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+            </div>
+
           </div>
         </main>
       </div>
