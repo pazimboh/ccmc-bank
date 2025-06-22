@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -21,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Plus, Building2, CreditCard, PiggyBank } from "lucide-react";
 
-interface TransactionDisplayItem {
+interface DashboardTransactionItem {
   id: string;
   date: string;
   description: string;
@@ -41,7 +40,7 @@ const Dashboard = () => {
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [accounts, setAccounts] = useState<AccountWithDetails[]>([]);
-  const [transactions, setTransactions] = useState<TransactionDisplayItem[]>([]);
+  const [transactions, setTransactions] = useState<DashboardTransactionItem[]>([]);
   const [deposits, setDeposits] = useState<Tables<"deposits">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newAccount, setNewAccount] = useState({
@@ -87,8 +86,8 @@ const Dashboard = () => {
 
       if (transactionsError) throw transactionsError;
 
-      // Transform transactions to match TransactionDisplayItem interface
-      const transformedTransactions: TransactionDisplayItem[] = transactionsData?.map(transaction => ({
+      // Transform transactions to match DashboardTransactionItem interface
+      const transformedTransactions: DashboardTransactionItem[] = transactionsData?.map(transaction => ({
         id: transaction.id,
         date: new Date(transaction.created_at).toLocaleDateString(),
         description: transaction.description || `${transaction.transaction_type} transaction`,
@@ -253,7 +252,23 @@ const Dashboard = () => {
                   <h1 className="text-3xl font-bold">Dashboard</h1>
                 </div>
                 
-                <AccountSummary />
+                {/* Show account summaries */}
+                {accounts.length > 0 && (
+                  <div className="grid gap-4">
+                    {accounts.map((account) => (
+                      <AccountSummary 
+                        key={account.id}
+                        account={{
+                          id: account.id,
+                          name: account.account_name,
+                          type: account.account_type,
+                          balance: Number(account.balance),
+                          accountNumber: account.account_number
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 
                 {/* Accounts Overview */}
                 <Card>
@@ -311,7 +326,21 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <RecentTransactions transactions={transactions} />
+                <RecentTransactions 
+                  transactions={transactions.map(t => ({
+                    ...t,
+                    // Map to match RecentTransactions expected interface
+                    account_id: null,
+                    created_at: t.date,
+                    currency: 'FCFA',
+                    customer_id: null,
+                    from_account: null,
+                    reference_number: null,
+                    to_account: null,
+                    transaction_id: t.id,
+                    transaction_type: t.type
+                  }))}
+                />
               </div>
             )}
 

@@ -34,13 +34,13 @@ const AdminDepositValidation = () => {
         .from('deposits')
         .select(`
           *,
-          profiles!deposits_user_id_fkey(first_name, last_name),
-          accounts!deposits_account_id_fkey(account_name, account_number)
+          profiles!user_id(first_name, last_name),
+          accounts!account_id(account_name, account_number)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDeposits(data as DepositWithDetails[] || []);
+      setDeposits((data || []) as DepositWithDetails[]);
     } catch (error) {
       console.error('Error fetching deposits:', error);
       toast({
