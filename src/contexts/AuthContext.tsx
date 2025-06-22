@@ -129,18 +129,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Auth state change:', event, session?.user?.email);
         
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(session?.user ?? null); // This should be the current user state before this event
+        const currentUser = user; // Capture state user before it's updated by setUser above for comparison
         
         if (session?.user) {
-          // Fetch user data directly without setTimeout
-          await fetchUserData(session.user.id);
-        } else {
-          // Clear profile and role as there's no user
+          // Only fetch full user data if:
+          // 1. The user ID has changed from the current user state (new login).
+          // 2. It's a USER_UPDATED event (user's attributes might have changed on the server).
+          // 3. The profile is currently null for the logged-in user (e.g., initial SIGNED_IN).
+          if (currentUser?.id !== session.user.id || event === "USER_UPDATED" || (profile === null && session.user.id)) {
+            console.log('AuthContext: Fetching user data due to user change, USER_UPDATED, or missing profile for current session user.');
+            await fetchUserData(session.user.id);
+          } else if (event === "TOKEN_REFRESHED") {
+            console.log("AuthContext: Token refreshed, profile data not re-fetched as user is same and profile exists.");
+            // Safety check: if for some reason profile is null even though user hasn't changed, fetch it.
+            if (profile === null && currentUser?.id === session.user.id) {
+                 console.log("AuthContext: Profile was null for current user during TOKEN_REFRESHED, fetching.");
+                 await fetchUserData(session.user.id);
+            }
+          }
+        } else { // No session.user (e.g., SIGNED_OUT event)
+          console.log("AuthContext: No session user (e.g., SIGNED_OUT), clearing profile and role.");
           setProfile(null);
           setUserRole(null);
         }
-        // Crucially, mark auth as resolved after processing this event
-        setAuthResolved(true);
+
+        // Ensure authResolved is set to true after the first time an event is processed.
+        // This prevents it from being set repeatedly if already true.
+        if (!authResolved) {
+             setAuthResolved(true);
+        }
       }
     );
 
