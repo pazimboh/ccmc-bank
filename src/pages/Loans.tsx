@@ -12,7 +12,7 @@ import { Link } from "react-router-dom"; // For "Apply for new loan" button
 
 const Loans = () => {
   const [activeTab, setActiveTab] = useState("loans");
-  const { profile, user, isLoading: authLoading } = useAuth();
+  const { profile, user } = useAuth();
 
   const [loansData, setLoansData] = useState<Tables<"loans">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,8 +23,8 @@ const Loans = () => {
   }, []);
 
   useEffect(() => {
-    if (authLoading || !user || !profile?.id) {
-      if (!authLoading) setIsLoading(false); // Stop loading if auth is done but no user/profile
+    if (!user || !profile?.id) {
+      setIsLoading(false);
       return;
     }
 
@@ -49,7 +49,7 @@ const Loans = () => {
     };
 
     fetchLoans();
-  }, [user, profile?.id, authLoading]);
+  }, [user, profile?.id]);
 
   const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "outline" | "destructive" => {
     switch (status?.toLowerCase()) {
@@ -60,8 +60,7 @@ const Loans = () => {
     }
   };
 
-
-  if (isLoading || authLoading && loansData.length === 0) {
+  if (isLoading && loansData.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">
@@ -141,7 +140,6 @@ const Loans = () => {
                         </div>
                       )}
                     </CardContent>
-                    {/* Optional: Add CardFooter for actions like "View Details" if a detail page exists */}
                   </Card>
                 ))}
               </div>

@@ -17,7 +17,7 @@ interface StatementWithAccountInfo extends Tables<"statements"> {
 
 const Statements = () => {
   const [activeTab, setActiveTab] = useState("statements");
-  const { profile, user, isLoading: authLoading } = useAuth();
+  const { profile, user } = useAuth();
 
   const [statements, setStatements] = useState<StatementWithAccountInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,8 +28,8 @@ const Statements = () => {
   }, []);
 
   useEffect(() => {
-    if (!user || !profile?.id || authLoading) {
-      if (!authLoading) setIsLoading(false);
+    if (!user || !profile?.id) {
+      setIsLoading(false);
       return;
     }
 
@@ -66,9 +66,9 @@ const Statements = () => {
     };
 
     fetchStatements();
-  }, [user, profile?.id, authLoading]);
+  }, [user, profile?.id]);
 
-  if (isLoading || authLoading && statements.length === 0) {
+  if (isLoading && statements.length === 0) {
      return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"; // Added useEffect
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
@@ -12,7 +13,7 @@ import { AlertCircle } from "lucide-react";
 
 const Profiles = () => {
   const [activeTab, setActiveTab] = useState("profile");
-  const { user, profile, isLoading: authLoading, refreshUserData } = useAuth();
+  const { user, profile, refreshUserData } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,17 +74,6 @@ const Profiles = () => {
       setIsSubmitting(false);
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!profile) {
     return (

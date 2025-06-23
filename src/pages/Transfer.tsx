@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +39,7 @@ type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 const Transfer = () => {
   const [activeTab, setActiveTab] = useState("transfer");
-  const { profile, user, isLoading: authLoading, refreshUserData } = useAuth();
+  const { profile, user, refreshUserData } = useAuth();
   const { toast } = useToast();
 
   const [accounts, setAccounts] = useState<Tables<"accounts">[]>([]);
@@ -102,12 +101,12 @@ const Transfer = () => {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user && profile?.id) {
+    if (user && profile?.id) {
       fetchPageData();
-    } else if (!authLoading) {
+    } else {
       setIsLoading(false);
     }
-  }, [user, profile?.id, authLoading]);
+  }, [user, profile?.id]);
 
   const onSubmit = async (values: PaymentFormValues) => {
     setIsSubmitting(true);
