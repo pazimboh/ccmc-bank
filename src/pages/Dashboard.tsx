@@ -13,6 +13,10 @@ import { Link, useSearchParams } from "react-router-dom"; // Imported useSearchP
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import CreateAccountModal from "@/components/customer/CreateAccountModal";
+import DepositModal from "@/components/customer/DepositModal";
+import TwoFactorNotification from "@/components/TwoFactorNotification";
+import { Badge } from "@/components/ui/badge";
 
 // Define a type for Account, matching AccountSummaryProps and Supabase accounts table
 interface Account extends Tables<"accounts"> { // Inherit from Supabase type
@@ -158,6 +162,8 @@ const Dashboard = () => {
     );
   }
 
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,16 +174,29 @@ const Dashboard = () => {
 
         <main className="flex-1 p-6">
           <div className="container mx-auto">
+            <TwoFactorNotification />
+            
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2"> {/* Changed grid-cols-3 to grid-cols-2 */}
+              <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="accounts">Accounts</TabsTrigger>
-                {/* Removed Transfers tab trigger */}
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}</h1>
-                <p className="text-muted-foreground">Here's an overview of your finances</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}</h1>
+                    <p className="text-muted-foreground">Here's an overview of your finances</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setShowDepositModal(true)}>
+                      Make Deposit
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowCreateAccount(true)}>
+                      Open Account
+                    </Button>
+                  </div>
+                </div>
                 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                   <Card>
@@ -295,8 +314,15 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="accounts" className="space-y-6">
-                <h1 className="text-3xl font-bold">Your Accounts</h1>
-                <p className="text-muted-foreground">Manage all your accounts in one place</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-bold">Your Accounts</h1>
+                    <p className="text-muted-foreground">Manage all your accounts in one place</p>
+                  </div>
+                  <Button onClick={() => setShowCreateAccount(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Open New Account
+                  </Button>
+                </div>
 
                 <div className="grid gap-6">
                   {isLoading && accountsData.length === 0 ? (
@@ -306,10 +332,14 @@ const Dashboard = () => {
                       <Card key={account.id}>
                         <CardHeader>
                           <div className="flex items-center justify-between">
-                            <CardTitle>{account.name}</CardTitle>
-                            <Button variant="outline" size="sm">Manage</Button>
+                            <div>
+                              <CardTitle>{account.name}</CardTitle>
+                              <CardDescription>Account Number: {account.account_number}</CardDescription>
+                            </div>
+                            <Badge variant={account.account_status === 'active' ? 'default' : 'secondary'}>
+                              {account.account_status}
+                            </Badge>
                           </div>
-                          <CardDescription>Account Number: {account.account_number}</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="flex justify-between items-center">
@@ -318,10 +348,21 @@ const Dashboard = () => {
                               <p className="text-3xl font-bold">{Number(account.balance).toLocaleString()} FCFA</p>
                             </div>
                             <div className="space-x-2">
-                              <Button size="sm">Transfer</Button>
+                              <Button 
+                                size="sm" 
+                                disabled={account.account_status === 'frozen'}
+                                title={account.account_status === 'frozen' ? 'Account is frozen' : ''}
+                              >
+                                Transfer
+                              </Button>
                               <Button size="sm" variant="outline">Statements</Button>
                             </div>
                           </div>
+                          {account.account_status === 'frozen' && (
+                            <div className="mt-4 text-sm text-orange-600 bg-orange-50 p-3 rounded">
+                              <strong>Account Frozen:</strong> This account can receive funds but withdrawals and transfers are disabled. Contact support for assistance.
+                            </div>
+                          )}
                           <Separator className="my-4" />
                           <h4 className="font-semibold mb-2">Recent Activity</h4>
                           <RecentTransactions
@@ -332,21 +373,32 @@ const Dashboard = () => {
                       </Card>
                     ))
                   ) : (
-                     <p>No accounts found.</p>
+                     <div className="text-center py-12">
+                       <p className="text-muted-foreground mb-4">No accounts found.</p>
+                       <Button onClick={() => setShowCreateAccount(true)}>
+                         <Plus className="mr-2 h-4 w-4" /> Open Your First Account
+                       </Button>
+                     </div>
                   )}
-
-                  <Card className="border-dashed border-2">
-                    <CardContent className="flex items-center justify-center p-6">
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Open New Account
-                      </Button>
-                    </CardContent>
-                  </Card>
                 </div>
               </TabsContent>
-
-              {/* Removed TabsContent for value="transfers" */}
             </Tabs>
+
+            <CreateAccountModal
+              isOpen={showCreateAccount}
+              onClose={() => setShowCreateAccount(false)}
+              onAccountCreated={() => {
+                fetchData();
+              }}
+            />
+
+            <DepositModal
+              isOpen={showDepositModal}
+              onClose={() => setShowDepositModal(false)}
+              onDepositCreated={() => {
+                // Optionally refresh data or show success message
+              }}
+            />
           </div>
         </main>
       </div>
