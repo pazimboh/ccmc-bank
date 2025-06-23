@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PendingApproval = () => {
-  const { signOut, profile, refreshUserData, isApproved, isAdmin } = useAuth();
+  const { signOut, profile, refreshUserData, isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
@@ -24,11 +24,12 @@ const PendingApproval = () => {
     if (isAdmin) {
       console.log('User is admin, redirecting to admin dashboard');
       navigate('/admin', { replace: true });
-    } else if (isApproved) {
-      console.log('User is approved, redirecting to dashboard');
+    } else {
+      // Since we removed pending approval, redirect all users to dashboard
+      console.log('Redirecting to dashboard');
       navigate('/dashboard', { replace: true });
     }
-  }, [isApproved, isAdmin, navigate]);
+  }, [isAdmin, navigate]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
