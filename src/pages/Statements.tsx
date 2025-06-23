@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button"; // Added Button
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
-import { AlertCircle, DownloadCloud, FileText } from "lucide-react"; // Added Icons
+import { AlertCircle, DownloadCloud, FileText } from "lucide-react";
 
 // Combine Statement with Account info for easier display
 interface StatementWithAccountInfo extends Tables<"statements"> {
@@ -39,26 +40,25 @@ const Statements = () => {
         // Fetch statements for the customer
         const { data: statementsData, error: statementsError } = await supabase
           .from("statements")
-          .select("*, accounts!inner(account_name, account_number)") // Ensure accounts are loaded via inner join
-          .eq("accounts.user_id", profile.id) // Filter by user_id on the joined accounts table
+          .select("*, accounts!inner(account_name, account_number)")
+          .eq("accounts.user_id", profile.id)
           .order("statement_date", { ascending: false });
 
         if (statementsError) throw statementsError;
 
         // Process data to combine statement with account info
         const combinedData: StatementWithAccountInfo[] = (statementsData || []).map(s => {
-          const accountInfo = Array.isArray(s.accounts) ? s.accounts[0] : s.accounts; // Handle potential array from join
+          const accountInfo = Array.isArray(s.accounts) ? s.accounts[0] : s.accounts;
           return {
             ...s,
-            account_name: accountInfo?.account_name, // Changed to access accountInfo?.account_name
+            account_name: accountInfo?.account_name,
             account_number: accountInfo?.account_number,
           };
         });
         setStatements(combinedData);
 
       } catch (err) {
-        console.error("Error fetching statements (friendly message):", err instanceof Error ? err.message : String(err));
-        console.error("Raw error object fetching statements:", err); // Detailed log
+        console.error("Error fetching statements:", err);
         setError(err instanceof Error ? err.message : "An unknown error occurred while fetching statements.");
       } finally {
         setIsLoading(false);
@@ -126,16 +126,9 @@ const Statements = () => {
                                 Statement for {stmt.account_name || 'N/A'} ({stmt.account_number || '****'})
                             </CardTitle>
                             <CardDescription>
-                                Statement Date: {new Date(stmt.statement_date).toLocaleDateString()} | Period: {new Date(stmt.period_start_date).toLocaleDateString()} - {new Date(stmt.period_end_date).toLocaleDateString()}
+                                Statement Date: {new Date(stmt.statement_date).toLocaleDateString()} | Period: {new Date(stmt.statement_period_start).toLocaleDateString()} - {new Date(stmt.statement_period_end).toLocaleDateString()}
                             </CardDescription>
                         </div>
-                        {stmt.file_url && (
-                            <Button asChild size="sm" variant="outline">
-                                <a href={stmt.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center">
-                                    <DownloadCloud className="mr-2 h-4 w-4" /> Download PDF
-                                </a>
-                            </Button>
-                        )}
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

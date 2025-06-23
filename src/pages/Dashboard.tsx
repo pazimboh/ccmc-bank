@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
-import RecentTransactions, { TransactionDisplayItem } from "@/components/dashboard/RecentTransactions";
+import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import AccountSummary from "@/components/dashboard/AccountSummary";
 import { ArrowUpRight, CreditCard, DollarSign, PiggyBank, Plus, AlertCircle } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom"; // Imported useSearchParams
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -18,37 +19,26 @@ import DepositModal from "@/components/customer/DepositModal";
 import TwoFactorNotification from "@/components/TwoFactorNotification";
 import { Badge } from "@/components/ui/badge";
 
-// Define a type for Account, matching AccountSummaryProps and Supabase accounts table
-interface Account extends Tables<"accounts"> { // Inherit from Supabase type
-  // Ensure fields expected by AccountSummary are present if names differ,
-  // but they seem to align if we map account_number to accountNumber.
-  // For Dashboard.tsx usage, we can directly use Supabase Row type if mapping is handled at component prop level,
-  // or ensure this interface matches what AccountSummary expects.
-  // Let's ensure AccountSummary uses 'account_number' or we map it.
-  // For now, assume AccountSummary can be adapted or direct field names match after mapping.
-  accountNumber: string; // This is 'account_number' in Supabase
-}
-
 interface DashboardKPIs {
   totalBalance: number;
   monthlySpending: number;
-  savingsGoalProgress?: number; // Percentage
+  savingsGoalProgress?: number;
   savingsGoalAmount?: number;
   savingsCurrentAmount?: number;
 }
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { profile, user } = useAuth(); // Assuming user object has id for Supabase queries
+  const { profile, user } = useAuth();
 
   // State for fetched data
-  const [accountsData, setAccountsData] = useState<Tables<"accounts">[]>([]); // Store raw Supabase account data
+  const [accountsData, setAccountsData] = useState<Tables<"accounts">[]>([]);
   const [transactionsData, setTransactionsData] = useState<Tables<"transactions">[]>([]);
   const [kpis, setKpis] = useState<DashboardKPIs>({ totalBalance: 0, monthlySpending: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Removed dummyAccounts
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
   useEffect(() => {
     document.title = "Dashboard - CCMC Bank";
@@ -60,77 +50,66 @@ const Dashboard = () => {
     const tabFromQuery = searchParams.get("tab");
     if (tabFromQuery === "accounts") {
       setActiveTab("accounts");
-    } else { // Default to overview if tab is not 'accounts' or not present
+    } else {
       setActiveTab("overview");
     }
-  }, [searchParams]); // Removed setActiveTab from deps as it's a stable setter
+  }, [searchParams]);
+
+  const fetchData = async () => {
+    if (!user || !profile?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Fetch accounts
+      const { data: fetchedAccounts, error: accountsError } = await supabase
+        .from("accounts")
+        .select("*")
+        .eq("user_id", profile.id);
+
+      if (accountsError) throw accountsError;
+      setAccountsData(fetchedAccounts || []);
+      const totalBalanceFromFetched = (fetchedAccounts || []).reduce((sum, acc) => sum + Number(acc.balance), 0);
+
+      // Fetch transactions
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("customer_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (transactionsError) throw transactionsError;
+      setTransactionsData(transactions || []);
+
+      // Calculate Monthly Spending
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const monthlySpending = (transactions || [])
+        .filter(t => new Date(t.created_at) > oneMonthAgo && Number(t.amount) < 0)
+        .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+
+      setKpis({
+        totalBalance: totalBalanceFromFetched,
+        monthlySpending: monthlySpending,
+      });
+
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user || !profile?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Fetch accounts
-        const { data: fetchedAccounts, error: accountsError } = await supabase
-          .from("accounts")
-          .select("*")
-          .eq("user_id", profile.id); // Changed "customer_id" to "user_id"
-
-        if (accountsError) throw accountsError;
-        setAccountsData(fetchedAccounts || []);
-        const totalBalanceFromFetched = (fetchedAccounts || []).reduce((sum, acc) => sum + Number(acc.balance), 0);
-
-        // Fetch transactions
-        const { data: transactions, error: transactionsError } = await supabase
-          .from("transactions")
-          .select("*")
-          .eq("customer_id", profile.id)
-          .order("created_at", { ascending: false })
-          .limit(10);
-
-        if (transactionsError) throw transactionsError;
-        setTransactionsData(transactions || []);
-
-        // Calculate Monthly Spending
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-        const monthlySpending = (transactions || [])
-          .filter(t => new Date(t.created_at) > oneMonthAgo && Number(t.amount) < 0)
-          .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-
-        setKpis({
-          totalBalance: totalBalanceFromFetched,
-          monthlySpending: monthlySpending,
-        });
-
-      } catch (err) {
-        console.error("Error fetching dashboard data (friendly message):", err instanceof Error ? err.message : String(err));
-        console.error("Raw error object fetching dashboard data:", err); // Detailed log
-        // Attempt to stringify if it's a complex object, otherwise direct log is fine.
-        // try {
-        //   console.error("Raw error object (stringified):", JSON.stringify(err, null, 2));
-        // } catch (e) {
-        //   console.error("Could not stringify error object:", e);
-        // }
-        setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
-  }, [user, profile?.id]); // Rerun if user or profile.id changes
-
-  // No longer need to map to TransactionDisplayItem here,
-  // RecentTransactions component will handle it with raw transaction data.
-  // const displayTransactions: TransactionDisplayItem[] = transactionsData.map(t => ({ ... }));
+  }, [user, profile?.id]);
 
   if (isLoading) {
     return (
@@ -143,7 +122,7 @@ const Dashboard = () => {
     );
   }
 
-  if (error && !isLoading) { // Only show main error if not loading (avoid brief error flash)
+  if (error && !isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -161,9 +140,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
-  const [showCreateAccount, setShowCreateAccount] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,12 +180,10 @@ const Dashboard = () => {
                       <CardTitle className="text-sm font-medium">
                         Total Balance
                       </CardTitle>
-                      {/* <DollarSign className="h-4 w-4 text-muted-foreground" /> */}
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{kpis.totalBalance.toLocaleString()} FCFA</div>
                       <p className="text-xs text-muted-foreground">
-                        {/* TODO: Fetch last month's change data - placeholder retained */}
                         +{(892.00).toLocaleString()} FCFA from last month
                       </p>
                     </CardContent>
@@ -223,15 +197,12 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{kpis.monthlySpending.toLocaleString()} FCFA</div>
-                      {/* TODO: Budget related text needs data source */}
                       <p className="text-xs text-muted-foreground">
                         Track your monthly budget
                       </p>
-                      {/* <Progress value={68} className="mt-2 h-1" /> */}
                     </CardContent>
                   </Card>
                   <Card>
-                    {/* Savings Goal Card - Omitted for now as data source is unclear */}
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">
                         Savings Goal
@@ -243,7 +214,6 @@ const Dashboard = () => {
                       <p className="text-xs text-muted-foreground">
                         Feature coming soon
                       </p>
-                      {/* <Progress value={78} className="mt-2 h-1" /> */}
                     </CardContent>
                   </Card>
                   <Card className="border-dashed border-2">
@@ -251,11 +221,11 @@ const Dashboard = () => {
                       <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
-                      <Button variant="outline" size="sm" className="justify-start" disabled title="Feature coming soon">
+                      <Button variant="outline" size="sm" className="justify-start" onClick={() => setShowCreateAccount(true)}>
                         <Plus className="mr-2 h-4 w-4" /> Add Account
                       </Button>
                       <Link to="/transfer">
-                        <Button variant="outline" size="sm" className="justify-start w-full"> {/* Ensure button takes full width of link if needed */}
+                        <Button variant="outline" size="sm" className="justify-start w-full">
                           <ArrowUpRight className="mr-2 h-4 w-4" /> Make Transfer
                         </Button>
                       </Link>
@@ -273,13 +243,12 @@ const Dashboard = () => {
                         <p>Loading accounts...</p>
                       ) : accountsData.length > 0 ? (
                         accountsData.map((account) => (
-                          // Map Supabase account fields to AccountSummaryProps
                           <AccountSummary
                             key={account.id}
                             account={{
                               id: account.id,
-                              name: account.name,
-                              type: account.type,
+                              name: account.account_name,
+                              type: account.account_type,
                               balance: Number(account.balance),
                               accountNumber: account.account_number
                             }}
@@ -303,7 +272,7 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <RecentTransactions
-                        transactions={transactionsData} // Pass raw Supabase transaction data
+                        transactions={transactionsData}
                         isLoading={isLoading && transactionsData.length === 0}
                         error={error}
                         limit={5}
@@ -333,7 +302,7 @@ const Dashboard = () => {
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div>
-                              <CardTitle>{account.name}</CardTitle>
+                              <CardTitle>{account.account_name}</CardTitle>
                               <CardDescription>Account Number: {account.account_number}</CardDescription>
                             </div>
                             <Badge variant={account.account_status === 'active' ? 'default' : 'secondary'}>
@@ -396,7 +365,7 @@ const Dashboard = () => {
               isOpen={showDepositModal}
               onClose={() => setShowDepositModal(false)}
               onDepositCreated={() => {
-                // Optionally refresh data or show success message
+                fetchData();
               }}
             />
           </div>

@@ -25,11 +25,11 @@ interface Deposit {
   profiles: {
     first_name: string;
     last_name: string;
-  };
+  } | null;
   accounts: {
     account_name: string;
     account_number: string;
-  };
+  } | null;
 }
 
 const AdminDepositValidation = () => {
@@ -51,7 +51,15 @@ const AdminDepositValidation = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDeposits(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: Deposit[] = (data || []).map(item => ({
+        ...item,
+        profiles: Array.isArray(item.profiles) ? item.profiles[0] || null : item.profiles,
+        accounts: Array.isArray(item.accounts) ? item.accounts[0] || null : item.accounts,
+      }));
+      
+      setDeposits(transformedData);
     } catch (error) {
       console.error('Error fetching deposits:', error);
       toast({
@@ -152,20 +160,30 @@ const AdminDepositValidation = () => {
                   <TableCell>
                     <div>
                       <div className="font-medium">
-                        {deposit.profiles.first_name} {deposit.profiles.last_name}
+                        {deposit.profiles?.first_name || 'N/A'} {deposit.profiles?.last_name || ''}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{deposit.accounts.account_name}</div>
-                      <div className="text-sm text-muted-foreground">{deposit.accounts.account_number}</div>
+                      <div className="font-medium">{deposit.accounts?.account_name || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">{deposit.accounts?.account_number || 'N/A'}</div>
                     </div>
                   </TableCell>
                   <TableCell>{deposit.amount.toLocaleString()} {deposit.currency}</TableCell>
                   <TableCell>{deposit.deposit_method || 'N/A'}</TableCell>
                   <TableCell className="font-mono text-sm">{deposit.reference_number}</TableCell>
-                  <TableCell>{getStatusBadge(deposit.status)}</TableCell>
+                  <TableCell>
+                    {deposit.status === "approved" ? (
+                      <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                    ) : deposit.status === "pending" ? (
+                      <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                    ) : deposit.status === "rejected" ? (
+                      <Badge className="bg-red-100 text-red-800">Rejected</Badge>
+                    ) : (
+                      <Badge variant="outline">Unknown</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm">
                     {new Date(deposit.created_at).toLocaleDateString()}
                   </TableCell>
@@ -191,7 +209,7 @@ const AdminDepositValidation = () => {
                           {selectedDeposit && (
                             <div className="space-y-4">
                               <div>
-                                <strong>Customer:</strong> {selectedDeposit.profiles.first_name} {selectedDeposit.profiles.last_name}
+                                <strong>Customer:</strong> {selectedDeposit.profiles?.first_name || 'N/A'} {selectedDeposit.profiles?.last_name || ''}
                               </div>
                               <div>
                                 <strong>Amount:</strong> {selectedDeposit.amount.toLocaleString()} {selectedDeposit.currency}

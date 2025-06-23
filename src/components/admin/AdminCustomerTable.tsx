@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Freeze, Unlock } from "lucide-react";
+import { Lock, Unlock } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -210,14 +209,35 @@ const AdminCustomerTable = () => {
                 </TableCell>
                 <TableCell>{customer.account_type || 'N/A'}</TableCell>
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
-                <TableCell>{getRoleBadge(customer.user_roles)}</TableCell>
-                <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                <TableCell>
+                  {customer.user_roles[0]?.role === 'admin' ? 
+                    <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge> :
+                    <Badge variant="outline">Customer</Badge>
+                  }
+                </TableCell>
+                <TableCell>
+                  {customer.status === "approved" ? (
+                    <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                  ) : customer.status === "pending" ? (
+                    <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                  ) : customer.status === "rejected" ? (
+                    <Badge className="bg-red-100 text-red-800">Rejected</Badge>
+                  ) : (
+                    <Badge variant="outline">Unknown</Badge>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="space-y-1">
                     {customer.accounts.length > 0 ? customer.accounts.map(account => (
                       <div key={account.id} className="flex items-center gap-2 text-sm">
                         <span className="font-mono">{account.account_number}</span>
-                        {getAccountStatusBadge(account.account_status)}
+                        {account.account_status === 'frozen' ? (
+                          <Badge className="bg-blue-100 text-blue-800">Frozen</Badge>
+                        ) : account.account_status === 'active' ? (
+                          <Badge className="bg-green-100 text-green-800">Active</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-800">Closed</Badge>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -227,7 +247,7 @@ const AdminCustomerTable = () => {
                           {account.account_status === 'frozen' ? (
                             <Unlock className="h-3 w-3" />
                           ) : (
-                            <Freeze className="h-3 w-3" />
+                            <Lock className="h-3 w-3" />
                           )}
                         </Button>
                       </div>
