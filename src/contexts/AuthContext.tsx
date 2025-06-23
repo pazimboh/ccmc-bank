@@ -188,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  console.log('[AuthContext] Provider Render. authResolved:', authResolved, 'Derived isLoading:', isLoading, 'User ID:', user?.id);
+  // console.log('[AuthContext] Provider Render. authResolved:', authResolved, 'Derived isLoading:', isLoading, 'User ID:', user?.id);
   return (
     <AuthContext.Provider
       value={{
