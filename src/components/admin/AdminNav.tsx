@@ -1,56 +1,97 @@
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Users, 
-  CreditCard, 
-  DollarSign, 
-  Activity, 
-  Shield, 
-  FileText, 
-  BarChart3, 
+import {
+  Users,
+  PiggyBank,
+  BarChart3,
+  Clock,
   Settings,
-  Banknote
+  ShieldAlert,
+  FileText,
+  Calculator,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AdminNavProps {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-const AdminNav = ({ activeSection, setActiveSection }: AdminNavProps) => {
-  const navItems = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "customers", label: "Customers", icon: Users },
-    { id: "deposits", label: "Deposits", icon: Banknote },
-    { id: "loans", label: "Loans", icon: CreditCard },
-    { id: "transactions", label: "Transactions", icon: DollarSign },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "audit", label: "Audit Log", icon: Activity },
-    { id: "reports", label: "Reports", icon: FileText },
-    { id: "settings", label: "Settings", icon: Settings },
-  ];
+const navItems = [
+  {
+    id: "overview",
+    label: "Dashboard",
+    icon: BarChart3,
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    icon: Users,
+  },
+  {
+    id: "loans",
+    label: "Loan Applications",
+    icon: PiggyBank,
+  },
+  {
+    id: "transactions",
+    label: "Transactions",
+    icon: Calculator,
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    icon: FileText,
+  },
+  {
+    id: "audit",
+    label: "Audit Log",
+    icon: Clock,
+  },
+  {
+    id: "security",
+    label: "Security",
+    icon: ShieldAlert,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+  },
+];
 
+const AdminNav = ({ activeTab, setActiveTab }: AdminNavProps) => {
   return (
-    <div className="w-64 min-h-screen bg-white border-r border-gray-200 p-4">
+    <nav className="hidden md:block w-64 bg-white border-r border-gray-200 p-4 min-h-[calc(100vh-4rem)]">
       <div className="space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Button
-              key={item.id}
-              variant={activeSection === item.id ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveSection(item.id)}
-            >
-              <Icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Button>
-          );
-        })}
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors w-full text-left",
+              activeTab === item.id
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+            onClick={() => setActiveTab(item.id)}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.label}
+          </button>
+        ))}
       </div>
-      <Separator className="my-4" />
-    </div>
+
+      <div className="absolute bottom-4 w-56">
+        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-blue-800">
+          <h3 className="font-medium text-sm mb-2">Admin Help Center</h3>
+          <p className="text-xs mb-3">
+            Need assistance with administrative tasks? Check the admin documentation.
+          </p>
+          <button className="text-xs text-blue-600 font-medium hover:underline">
+            View Documentation
+          </button>
+        </div>
+      </div>
+    </nav>
   );
 };
 

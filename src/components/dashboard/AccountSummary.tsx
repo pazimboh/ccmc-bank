@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 interface AccountSummaryProps {
   account: {
     id: string;
-    name: string;
+    account_name: string; // Changed from name to account_name
     type: string;
     balance: number;
     accountNumber: string;
@@ -18,7 +18,7 @@ const AccountSummary = ({ account }: AccountSummaryProps) => {
     <div className="p-4 border rounded-lg hover:shadow-md transition-shadow">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="font-semibold">{account.name}</h3>
+          <h3 className="font-semibold">{account.account_name}</h3> {/* Changed from account.name */}
           <p className="text-sm text-muted-foreground">{account.accountNumber}</p>
         </div>
         <div className="text-right">

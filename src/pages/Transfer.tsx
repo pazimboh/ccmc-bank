@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { AlertCircle, ArrowDownRight, ArrowUpRight, CreditCard } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // For success/error messages
 
 // Zod schema for form validation
 const paymentFormSchema = z.object({
@@ -24,10 +23,10 @@ const paymentFormSchema = z.object({
   transferType: z.enum(["internal", "external"], {
     required_error: "Please select a transfer type.",
   }),
-  recipientAccountNumber: z.string().min(5, "Recipient account number is required."),
-  recipientName: z.string().optional(),
+  recipientAccountNumber: z.string().min(5, "Recipient account number is required."), // Basic validation
+  recipientName: z.string().optional(), // Optional for internal, maybe required for external
   amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")),
+    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")), // Clean input
     z.number().positive("Amount must be positive.")
   ),
   description: z.string().optional(),
@@ -38,15 +37,16 @@ const paymentFormSchema = z.object({
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-const Transfer = () => {
-  const [activeTab, setActiveTab] = useState("transfer");
+const Transfer = () => { // Renamed component
+  const [activeTab, setActiveTab] = useState("transfer"); // Updated activeTab
   const { profile, user, isLoading: authLoading, refreshUserData } = useAuth();
   const { toast } = useToast();
 
   const [accounts, setAccounts] = useState<Tables<"accounts">[]>([]);
   const [paymentTransactions, setPaymentTransactions] = useState<Tables<"transactions">[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // No longer need selectedAccountId state, react-hook-form will manage formAccountId
+  const [isLoading, setIsLoading] = useState(true); // For initial data load
+  const [isSubmitting, setIsSubmitting] = useState(false); // For form submission
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<PaymentFormValues>({
@@ -63,7 +63,7 @@ const Transfer = () => {
   const watchTransferType = form.watch("transferType");
 
   const fetchPageData = async (isRefresh: boolean = false) => {
-    if (!isRefresh) setIsLoading(true);
+    if (!isRefresh) setIsLoading(true); // Only full loading screen on initial load
     setError(null);
     try {
       if (!user || !profile?.id) throw new Error("User not authenticated.");
@@ -71,7 +71,7 @@ const Transfer = () => {
       const { data: accountsData, error: accountsError } = await supabase
         .from("accounts")
         .select("*")
-        .eq("user_id", profile.id);
+        .eq("user_id", profile.id); // Changed "customer_id" to "user_id"
       if (accountsError) throw accountsError;
       setAccounts(accountsData || []);
       if (accountsData && accountsData.length > 0 && !form.getValues("fromAccountId")) {
@@ -98,16 +98,17 @@ const Transfer = () => {
   };
 
   useEffect(() => {
-    document.title = "Transfer - CCMC Bank";
+    document.title = "Transfer - CCMC Bank"; // Updated document title
   }, []);
 
   useEffect(() => {
     if (!authLoading && user && profile?.id) {
       fetchPageData();
     } else if (!authLoading) {
-      setIsLoading(false);
+      setIsLoading(false); // Auth not loading, but no user/profile
     }
   }, [user, profile?.id, authLoading]);
+
 
   const onSubmit = async (values: PaymentFormValues) => {
     setIsSubmitting(true);
@@ -125,13 +126,14 @@ const Transfer = () => {
       const commonTransactionDetails = {
         customer_id: profile.id,
         description: values.description || `${values.transferType} to ${values.recipientAccountNumber}`,
-        status: "completed",
+        status: "completed", // Assuming direct completion for now
       };
 
       if (values.transferType === "internal") {
+        // Internal Transfer
         const { data: recipientAccount, error: recipientError } = await supabase
           .from("accounts")
-          .select("id, balance, user_id")
+          .select("id, balance, customer_id")
           .eq("account_number", values.recipientAccountNumber)
           .single();
 
@@ -144,44 +146,49 @@ const Transfer = () => {
             throw new Error("Cannot transfer to the same account.");
         }
 
+
         // Client-side transaction sequence (NOT ATOMIC)
+        // 1. Debit sender
         const { error: debitError } = await supabase
           .from("accounts")
           .update({ balance: Number(fromAccount.balance) - transferAmount })
           .eq("id", fromAccount.id);
         if (debitError) throw new Error(`Failed to debit sender: ${debitError.message}`);
 
+        // 2. Credit receiver
         const { error: creditError } = await supabase
           .from("accounts")
           .update({ balance: Number(recipientAccount.balance) + transferAmount })
           .eq("id", recipientAccount.id);
-        if (creditError) {
+        if (creditError) { /* Attempt to rollback sender's debit - best effort */
             await supabase.from("accounts").update({ balance: fromAccount.balance }).eq("id", fromAccount.id);
             throw new Error(`Failed to credit recipient: ${creditError.message}`);
         }
 
+        // 3. Record sender's transaction
         const { error: senderTxError } = await supabase.from("transactions").insert({
           ...commonTransactionDetails,
           transaction_id: crypto.randomUUID(),
           from_account: fromAccount.account_number,
-          to_account: recipientAccount.id,
+          to_account: recipientAccount.id, // or recipientAccount.account_number
           amount: -transferAmount,
           transaction_type: "transfer_out",
         });
-        if (senderTxError) { throw new Error(`Sender transaction record failed: ${senderTxError.message}`); }
+        if (senderTxError) { /* Complex rollback needed */ throw new Error(`Sender transaction record failed: ${senderTxError.message}`); }
 
+        // 4. Record recipient's transaction
         const { error: recipientTxError } = await supabase.from("transactions").insert({
           ...commonTransactionDetails,
           transaction_id: crypto.randomUUID(),
-          customer_id: recipientAccount.user_id,
+          customer_id: recipientAccount.customer_id, // Recipient's customer_id
           from_account: fromAccount.account_number,
-          to_account: recipientAccount.id,
+          to_account: recipientAccount.id, // or recipientAccount.account_number
           amount: transferAmount,
           transaction_type: "transfer_in",
         });
-        if (recipientTxError) { throw new Error(`Recipient transaction record failed: ${recipientTxError.message}`);}
+        if (recipientTxError) { /* Complex rollback needed */ throw new Error(`Recipient transaction record failed: ${recipientTxError.message}`);}
 
-      } else {
+      } else { // External Transfer / Payment
         const { error: updateError } = await supabase
           .from("accounts")
           .update({ balance: Number(fromAccount.balance) - transferAmount })
@@ -192,12 +199,12 @@ const Transfer = () => {
           ...commonTransactionDetails,
           transaction_id: crypto.randomUUID(),
           from_account: fromAccount.account_number,
-          to_account: values.recipientAccountNumber,
+          to_account: values.recipientAccountNumber, // External account number
           amount: -transferAmount,
-          transaction_type: "payment",
-          status: "pending",
+          transaction_type: "payment", // Or 'external_transfer'
+          status: "pending", // External might be pending
         });
-        if (txError) {
+        if (txError) { /* Attempt to rollback */
             await supabase.from("accounts").update({ balance: fromAccount.balance }).eq("id", fromAccount.id);
             throw new Error(`Transaction record failed: ${txError.message}`);
         }
@@ -205,8 +212,8 @@ const Transfer = () => {
 
       toast({ title: "Success", description: "Transfer completed successfully." });
       form.reset();
-      fetchPageData(true);
-      if (typeof refreshUserData === 'function') refreshUserData();
+      fetchPageData(true); // Refresh data
+      if (typeof refreshUserData === 'function') refreshUserData(); // Refresh global profile/auth context if needed
 
     } catch (err) {
       console.error("Transfer/Payment error:", err);
@@ -220,12 +227,12 @@ const Transfer = () => {
     switch (transactionType?.toLowerCase()) {
       case "deposit": case "salary": case "transfer_in": return { icon: ArrowDownRight, color: "text-green-500" };
       case "payment": case "withdrawal": case "purchase": case "transfer_out": return { icon: ArrowUpRight, color: "text-red-500" };
-      case "transfer": return { icon: CreditCard, color: "text-blue-500" };
+      case "transfer": return { icon: CreditCard, color: "text-blue-500" }; // Generic transfer if type is just 'transfer'
       default: return { icon: CreditCard, color: "text-gray-500" };
     }
   };
 
-  if (isLoading) {
+  if (isLoading) { // Initial loading state
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">
@@ -245,7 +252,7 @@ const Transfer = () => {
           <div className="container mx-auto space-y-8">
             <h1 className="text-3xl font-bold">Payments & Transfers</h1>
 
-            {error && !isSubmitting && (
+            {error && !isSubmitting && ( // Show general page load error if not submitting
               <Card className="border-destructive bg-destructive/10">
                 <CardHeader><CardTitle className="text-destructive flex items-center"><AlertCircle className="mr-2 h-5 w-5" /> Error Fetching Data</CardTitle></CardHeader>
                 <CardContent><p className="text-destructive/90">Could not load payments page data: {error}</p>
@@ -273,7 +280,7 @@ const Transfer = () => {
                             <SelectContent>
                               {accounts.length > 0 ? accounts.map(acc => (
                                 <SelectItem key={acc.id} value={acc.id}>
-                                  {acc.account_name} ({acc.account_number}) - Bal: {Number(acc.balance).toLocaleString()} FCFA
+                                  {acc.name} ({acc.account_number}) - Bal: {Number(acc.balance).toLocaleString()} FCFA
                                 </SelectItem>
                               )) : <SelectItem value="no-acc" disabled>No accounts available</SelectItem>}
                             </SelectContent>
@@ -401,4 +408,4 @@ const Transfer = () => {
   );
 };
 
-export default Transfer;
+export default Transfer; // Updated export

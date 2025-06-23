@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Lock, Unlock } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -18,13 +18,6 @@ interface Customer {
   created_at: string | null;
   user_roles: {
     role: string;
-  }[];
-  accounts: {
-    id: string;
-    account_name: string;
-    account_number: string;
-    account_status: string;
-    balance: number;
   }[];
 }
 
@@ -40,8 +33,7 @@ const AdminCustomerTable = () => {
         .from('profiles')
         .select(`
           *,
-          user_roles(role),
-          accounts(id, account_name, account_number, account_status, balance)
+          user_roles(role)
         `)
         .order('created_at', { ascending: false });
 
@@ -55,10 +47,10 @@ const AdminCustomerTable = () => {
         return;
       }
 
+      // Ensure data has the correct structure
       const customersData = (data || []).map(customer => ({
         ...customer,
-        user_roles: customer.user_roles || [],
-        accounts: customer.accounts || []
+        user_roles: customer.user_roles || []
       }));
 
       setCustomers(customersData);
@@ -102,41 +94,6 @@ const AdminCustomerTable = () => {
     }
   };
 
-  const handleAccountFreeze = async (accountId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'frozen' ? 'active' : 'frozen';
-    
-    try {
-      const { error } = await supabase
-        .from('accounts')
-        .update({ account_status: newStatus })
-        .eq('id', accountId);
-
-      if (error) throw error;
-
-      // Update local state
-      setCustomers(customers.map(customer => ({
-        ...customer,
-        accounts: customer.accounts.map(account => 
-          account.id === accountId 
-            ? { ...account, account_status: newStatus }
-            : account
-        )
-      })));
-
-      toast({
-        title: "Account Updated",
-        description: `Account ${newStatus === 'frozen' ? 'frozen' : 'unfrozen'} successfully`,
-      });
-    } catch (error) {
-      console.error('Error updating account status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update account status",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "approved":
@@ -155,19 +112,6 @@ const AdminCustomerTable = () => {
     return role === 'admin' ? 
       <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge> :
       <Badge variant="outline">Customer</Badge>;
-  };
-
-  const getAccountStatusBadge = (status: string) => {
-    switch (status) {
-      case "frozen":
-        return <Badge className="bg-blue-100 text-blue-800">Frozen</Badge>;
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "closed":
-        return <Badge className="bg-red-100 text-red-800">Closed</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
   };
 
   if (isLoading) {
@@ -189,7 +133,6 @@ const AdminCustomerTable = () => {
               <TableHead>Phone</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Accounts</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -209,53 +152,8 @@ const AdminCustomerTable = () => {
                 </TableCell>
                 <TableCell>{customer.account_type || 'N/A'}</TableCell>
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
-                <TableCell>
-                  {customer.user_roles[0]?.role === 'admin' ? 
-                    <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge> :
-                    <Badge variant="outline">Customer</Badge>
-                  }
-                </TableCell>
-                <TableCell>
-                  {customer.status === "approved" ? (
-                    <Badge className="bg-green-100 text-green-800">Approved</Badge>
-                  ) : customer.status === "pending" ? (
-                    <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                  ) : customer.status === "rejected" ? (
-                    <Badge className="bg-red-100 text-red-800">Rejected</Badge>
-                  ) : (
-                    <Badge variant="outline">Unknown</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    {customer.accounts.length > 0 ? customer.accounts.map(account => (
-                      <div key={account.id} className="flex items-center gap-2 text-sm">
-                        <span className="font-mono">{account.account_number}</span>
-                        {account.account_status === 'frozen' ? (
-                          <Badge className="bg-blue-100 text-blue-800">Frozen</Badge>
-                        ) : account.account_status === 'active' ? (
-                          <Badge className="bg-green-100 text-green-800">Active</Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-800">Closed</Badge>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAccountFreeze(account.id, account.account_status)}
-                          className="h-6 px-2"
-                        >
-                          {account.account_status === 'frozen' ? (
-                            <Unlock className="h-3 w-3" />
-                          ) : (
-                            <Lock className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    )) : (
-                      <span className="text-muted-foreground">No accounts</span>
-                    )}
-                  </div>
-                </TableCell>
+                <TableCell>{getRoleBadge(customer.user_roles)}</TableCell>
+                <TableCell>{getStatusBadge(customer.status)}</TableCell>
                 <TableCell className="text-sm">
                   {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
                 </TableCell>
