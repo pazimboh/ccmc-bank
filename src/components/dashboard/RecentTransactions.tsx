@@ -3,22 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowDownRight, ArrowUpRight, CreditCard, ShoppingBag, AlertCircle } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types"; // Import Supabase types
 
-// Define a type for the transaction prop, using Supabase's Transaction Row type
-// and adding necessary icon/color fields if they are to be determined by Dashboard.tsx
-// Or, determine icon/color within this component based on transaction_type.
-export interface TransactionDisplayItem extends Tables<"transactions"> {
-  // These fields were in the original dummy data. We'll need to map them
-  // from the fetched `transaction_type` or other data.
-  description: string; // Supabase `transactions` doesn't have a direct 'description'. Might use 'transaction_type' or join another table.
-  date: string; // Will need to format `created_at`
-  type: string; // Corresponds to `transaction_type`
-  icon: React.ElementType;
-  color: string;
-}
-
+// Define a type for the transaction prop using Supabase's Transaction Row type
 interface RecentTransactionsProps {
   limit?: number;
-  transactions?: TransactionDisplayItem[]; // Allow transactions to be passed as a prop
+  transactions?: Tables<"transactions">[]; // Use raw Supabase transaction type
   isLoading?: boolean;
   error?: string | null;
 }
@@ -39,10 +27,8 @@ const getTransactionVisuals = (transactionType: string) => {
   }
 };
 
-
 const RecentTransactions = ({ limit, transactions: propTransactions, isLoading, error }: RecentTransactionsProps) => {
-  // Use propTransactions if provided, otherwise keep the dummy data as fallback for now
-  // or handle empty state.
+  // Use propTransactions if provided, otherwise handle empty state
   const transactionsToDisplay = propTransactions || [];
 
   if (isLoading) {
@@ -65,10 +51,11 @@ const RecentTransactions = ({ limit, transactions: propTransactions, isLoading, 
     .map(t => {
       const visuals = getTransactionVisuals(t.transaction_type);
       return {
-        ...t,
-        description: `${t.transaction_type} ${t.from_account ? `from ${t.from_account}` : ''} ${t.to_account ? `to ${t.to_account}`: ''}`.trim() , // Basic description
-        date: new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Format date
+        id: t.id,
+        description: `${t.transaction_type} ${t.from_account ? `from ${t.from_account}` : ''} ${t.to_account ? `to ${t.to_account}`: ''}`.trim(),
+        date: new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         type: t.transaction_type,
+        amount: t.amount,
         icon: visuals.icon,
         color: visuals.color,
       };
@@ -79,7 +66,7 @@ const RecentTransactions = ({ limit, transactions: propTransactions, isLoading, 
     <div className="space-y-4">
       {displayItems.map((transaction) => (
         <div
-          key={transaction.id} // Assuming Supabase 'id' is the transaction primary key
+          key={transaction.id}
           className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
         >
           <div className="flex items-center space-x-3">
