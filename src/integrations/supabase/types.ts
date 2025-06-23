@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          account_status: string | null
+          account_type: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          account_status?: string | null
+          account_type: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          account_status?: string | null
+          account_type?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -47,6 +89,101 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      customer_settings: {
+        Row: {
+          allow_phone_contact_for_offers: boolean
+          allow_phone_contact_for_support: boolean
+          created_at: string
+          email_promotional_offers: boolean
+          email_transaction_alerts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_phone_contact_for_offers?: boolean
+          allow_phone_contact_for_support?: boolean
+          created_at?: string
+          email_promotional_offers?: boolean
+          email_transaction_alerts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_phone_contact_for_offers?: boolean
+          allow_phone_contact_for_support?: boolean
+          created_at?: string
+          email_promotional_offers?: boolean
+          email_transaction_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      deposits: {
+        Row: {
+          account_id: string
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          currency: string
+          deposit_method: string | null
+          description: string | null
+          id: string
+          receipt_url: string | null
+          reference_number: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          account_id: string
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          currency?: string
+          deposit_method?: string | null
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          reference_number: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          deposit_method?: string | null
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          reference_number?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposits_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       loans: {
         Row: {
@@ -108,46 +245,6 @@ export type Database = {
           },
         ]
       }
-      accounts: { // Added accounts table schema
-        Row: {
-          id: string
-          customer_id: string
-          name: string
-          type: string
-          balance: number
-          account_number: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          customer_id: string
-          name: string
-          type: string
-          balance: number
-          account_number: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          customer_id?: string
-          name?: string
-          type?: string
-          balance?: number
-          account_number?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounts_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       profiles: {
         Row: {
           account_type: string | null
@@ -183,56 +280,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      statements: { // Added statements table schema
-        Row: {
-          id: string
-          account_id: string
-          customer_id: string
-          statement_date: string
-          period_start_date: string
-          period_end_date: string
-          opening_balance: number
-          closing_balance: number
-          total_credits: number
-          total_debits: number
-          file_url: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          account_id: string
-          customer_id: string
-          statement_date: string
-          period_start_date: string
-          period_end_date: string
-          opening_balance: number
-          closing_balance: number
-          total_credits: number
-          total_debits: number
-          file_url?: string | null
-          created_at?: string
-        }
-        Update: {
-          // Assuming most fields are not directly updatable once a statement is generated
-          file_url?: string | null // Example: if a statement is regenerated
-        }
-        Relationships: [
-          {
-            foreignKeyName: "statements_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "statements_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
       }
       security_events: {
         Row: {
@@ -270,6 +317,53 @@ export type Database = {
         }
         Relationships: []
       }
+      statements: {
+        Row: {
+          account_id: string
+          closing_balance: number
+          created_at: string
+          id: string
+          opening_balance: number
+          statement_date: string
+          statement_period_end: string
+          statement_period_start: string
+          total_credits: number
+          total_debits: number
+        }
+        Insert: {
+          account_id: string
+          closing_balance: number
+          created_at?: string
+          id?: string
+          opening_balance: number
+          statement_date: string
+          statement_period_end: string
+          statement_period_start: string
+          total_credits?: number
+          total_debits?: number
+        }
+        Update: {
+          account_id?: string
+          closing_balance?: number
+          created_at?: string
+          id?: string
+          opening_balance?: number
+          statement_date?: string
+          statement_period_end?: string
+          statement_period_start?: string
+          total_credits?: number
+          total_debits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           description: string | null
@@ -299,33 +393,45 @@ export type Database = {
       }
       transactions: {
         Row: {
+          account_id: string | null
           amount: number
           created_at: string
+          currency: string | null
           customer_id: string | null
+          description: string | null
           from_account: string | null
           id: string
+          reference_number: string | null
           status: string
           to_account: string | null
           transaction_id: string
           transaction_type: string
         }
         Insert: {
+          account_id?: string | null
           amount: number
           created_at?: string
+          currency?: string | null
           customer_id?: string | null
+          description?: string | null
           from_account?: string | null
           id?: string
+          reference_number?: string | null
           status?: string
           to_account?: string | null
           transaction_id: string
           transaction_type: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
           created_at?: string
+          currency?: string | null
           customer_id?: string | null
+          description?: string | null
           from_account?: string | null
           id?: string
+          reference_number?: string | null
           status?: string
           to_account?: string | null
           transaction_id?: string
@@ -333,10 +439,86 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfers: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          from_account_id: string
+          from_user_id: string
+          id: string
+          recipient_account_number: string | null
+          recipient_name: string | null
+          reference_number: string
+          status: string
+          to_account_id: string | null
+          to_user_id: string | null
+          transfer_type: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          from_account_id: string
+          from_user_id: string
+          id?: string
+          recipient_account_number?: string | null
+          recipient_name?: string | null
+          reference_number: string
+          status?: string
+          to_account_id?: string | null
+          to_user_id?: string | null
+          transfer_type: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          from_account_id?: string
+          from_user_id?: string
+          id?: string
+          recipient_account_number?: string | null
+          recipient_name?: string | null
+          reference_number?: string
+          status?: string
+          to_account_id?: string | null
+          to_user_id?: string | null
+          transfer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -367,11 +549,58 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          email_notifications: boolean
+          id: string
+          show_2fa_notification: boolean
+          sms_notifications: boolean
+          two_factor_backup_codes: Json | null
+          two_factor_enabled: boolean
+          two_factor_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          show_2fa_notification?: boolean
+          sms_notifications?: boolean
+          two_factor_backup_codes?: Json | null
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          show_2fa_notification?: boolean
+          sms_notifications?: boolean
+          two_factor_backup_codes?: Json | null
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_account_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_deposit_reference: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
