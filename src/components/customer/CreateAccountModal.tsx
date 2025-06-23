@@ -49,15 +49,15 @@ const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }: CreateAccount
           account_type: accountType,
           balance: 0,
           currency: 'FCFA',
-          status: 'active',
-          account_status: 'active'
+          status: 'pending', // Set as pending until admin approval
+          account_status: 'pending' // Account status also pending
         });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description: "Account created successfully and is pending approval",
       });
 
       setAccountName("");
@@ -104,6 +104,9 @@ const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }: CreateAccount
                 <SelectItem value="business">Business</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="bg-amber-50 p-3 rounded-lg text-sm text-amber-800">
+            <strong>Note:</strong> Your account will be created with pending status and requires admin approval before it can be used for transactions.
           </div>
           <div className="flex gap-2">
             <Button onClick={onClose} variant="outline" className="flex-1">

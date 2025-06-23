@@ -8,20 +8,18 @@ interface GuestRouteProps {
 }
 
 const GuestRoute = ({ children }: GuestRouteProps) => {
-  const { user, isApproved, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       if (isAdmin) {
         navigate('/admin');
-      } else if (isApproved) {
-        navigate('/dashboard');
       } else {
-        navigate('/pending-approval');
+        navigate('/dashboard');
       }
     }
-  }, [user, isApproved, isAdmin, navigate]);
+  }, [user, isAdmin, navigate]);
 
   // If user exists, don't render children (will redirect)
   if (user) {

@@ -8,12 +8,10 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { user, isApproved, isAdmin, profile } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   console.log('ProtectedRoute check:', {
     user: user?.email,
-    profileStatus: profile?.status,
-    isApproved,
     isAdmin,
     requireAdmin
   });
@@ -28,12 +26,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   if (requireAdmin && !isAdmin) {
     console.log('ProtectedRoute: Admin required, user is not admin. Redirecting to /dashboard.');
     return <Navigate to="/dashboard" replace />;
-  }
-
-  // Approval check for non-admin routes
-  if (!requireAdmin && !isApproved && !isAdmin) {
-    console.log('ProtectedRoute: User not approved and not admin. Redirecting to /pending-approval.');
-    return <Navigate to="/pending-approval" replace />;
   }
 
   console.log('ProtectedRoute: All checks passed, rendering children.');

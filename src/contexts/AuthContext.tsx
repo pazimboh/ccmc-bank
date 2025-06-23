@@ -29,7 +29,6 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   userRole: UserRole | null;
-  isApproved: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
@@ -54,7 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
-  const isApproved = profile?.status === 'approved';
   const isAdmin = userRole?.role === 'admin';
 
   // Load user data from localStorage
@@ -240,7 +238,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         userRole,
-        isApproved,
         isAdmin,
         signOut,
         refreshUserData,

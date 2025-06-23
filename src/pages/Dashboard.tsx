@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import DashboardAccounts from "@/components/dashboard/DashboardAccounts";
+import EmailVerification from "@/components/EmailVerification";
 import { AlertCircle } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,6 +73,7 @@ const Dashboard = () => {
 
         <main className="flex-1 p-6">
           <div className="container mx-auto">
+            <EmailVerification />
             <TwoFactorNotification />
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
