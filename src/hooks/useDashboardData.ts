@@ -17,16 +17,13 @@ export const useDashboardData = () => {
   const [accountsData, setAccountsData] = useState<Tables<"accounts">[]>([]);
   const [transactionsData, setTransactionsData] = useState<Tables<"transactions">[]>([]);
   const [kpis, setKpis] = useState<DashboardKPIs>({ totalBalance: 0, monthlySpending: 0 });
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!user || !profile?.id) {
-      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
@@ -67,8 +64,6 @@ export const useDashboardData = () => {
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -80,7 +75,7 @@ export const useDashboardData = () => {
     accountsData,
     transactionsData,
     kpis,
-    isLoading,
+    isLoading: false, // No more loading states
     error,
     refetchData: fetchData
   };

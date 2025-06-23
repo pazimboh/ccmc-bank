@@ -25,7 +25,6 @@ const Dashboard = () => {
     accountsData,
     transactionsData,
     kpis,
-    isLoading,
     error,
     refetchData
   } = useDashboardData();
@@ -45,18 +44,7 @@ const Dashboard = () => {
     }
   }, [searchParams]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !isLoading) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -98,7 +86,7 @@ const Dashboard = () => {
                   kpis={kpis}
                   accountsData={accountsData}
                   transactionsData={transactionsData}
-                  isLoading={isLoading}
+                  isLoading={false}
                   error={error}
                   onCreateAccount={() => setShowCreateAccount(true)}
                   onDeposit={() => setShowDepositModal(true)}
@@ -109,7 +97,7 @@ const Dashboard = () => {
                 <DashboardAccounts
                   accountsData={accountsData}
                   transactionsData={transactionsData}
-                  isLoading={isLoading}
+                  isLoading={false}
                   onCreateAccount={() => setShowCreateAccount(true)}
                 />
               </TabsContent>

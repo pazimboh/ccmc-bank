@@ -8,11 +8,11 @@ interface GuestRouteProps {
 }
 
 const GuestRoute = ({ children }: GuestRouteProps) => {
-  const { user, isLoading, isApproved, isAdmin } = useAuth();
+  const { user, isApproved, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (user) {
       if (isAdmin) {
         navigate('/admin');
       } else if (isApproved) {
@@ -21,9 +21,9 @@ const GuestRoute = ({ children }: GuestRouteProps) => {
         navigate('/pending-approval');
       }
     }
-  }, [user, isLoading, isApproved, isAdmin, navigate]);
+  }, [user, isApproved, isAdmin, navigate]);
 
-  // Remove loading spinner for guest routes - just show content if no user
+  // If user exists, don't render children (will redirect)
   if (user) {
     return null;
   }
